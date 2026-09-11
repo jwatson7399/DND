@@ -41,7 +41,15 @@ The maintainer (Julian, working with Claude in the DnD project) regenerates the 
    where resolved = false
    order by section, created_at;
    ```
-2. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), update characters, quests, NPCs, locations, enemies, and rewrite Current state. The "How to add a session" section at the bottom of the journal lists exactly what gets touched.
+2. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), update characters, quests, NPCs, locations, enemies, and rewrite Current state. What gets touched each time:
+   - Session minutes: fill the next `details.session` block (Summary, Minutes, Roleplay moments, Rolls), add a new placeholder block below it, and add a matching sidebar link.
+   - Story so far: one new paragraph under an "After Session N" heading.
+   - The party: append a "Session N:" line to each character's log and update level, HP, and abilities.
+   - Quests: update status pills and log lines, add new quests as cards.
+   - NPCs, Locations, Enemies: add cards for anything new, append to existing ones.
+   - Current state: rewrite entirely so it describes only the latest end-of-session position.
+   - Lessons and tactics: add anything the DM said or the fight taught.
+   - Campaign at a glance: bump the session count and any changed facts.
 3. **Mark the folded notes resolved.**
    ```sql
    update journal_notes set resolved = true where resolved = false;
