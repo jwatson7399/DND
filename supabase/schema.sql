@@ -58,6 +58,10 @@ begin
 end;
 $$;
 
+-- Triggers fire regardless of execute privilege, so nobody needs to call this
+-- directly. Revoking execute keeps it off the public RPC surface.
+revoke execute on function public.journal_notes_rate_limit() from public, anon, authenticated;
+
 drop trigger if exists journal_notes_rate_limit on public.journal_notes;
 create trigger journal_notes_rate_limit
   before insert on public.journal_notes

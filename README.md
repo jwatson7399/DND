@@ -80,7 +80,7 @@ Row level security is on. Policies for the `anon` role:
 - `insert`: allowed when `author` is in the allowed list, `body` length is 1 to 2000, and `resolved = false`.
 - No `update` or `delete` policy. In addition, `update`, `delete`, and `truncate` privileges are revoked from `anon` and `authenticated`, so resolving or removing notes can only happen from the dashboard or with the service role key.
 
-Rate limit: a `before insert` trigger (`journal_notes_rate_limit`) rejects the row when the same author already has 20 or more notes in the last 10 minutes. The page turns that error into a one-line "slow down" message.
+Rate limit: a `before insert` trigger (`journal_notes_rate_limit`) rejects the row when the same author already has 20 or more notes in the last 10 minutes. The page turns that error into a one-line "slow down" message. The function runs as `security definer` with `execute` revoked from `anon` and `authenticated`, so it cannot be called over the API.
 
 Realtime: the table is added to the `supabase_realtime` publication so open pages get inserts and resolved changes without a refresh.
 
