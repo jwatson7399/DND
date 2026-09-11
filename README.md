@@ -55,7 +55,7 @@ The maintainer (Julian, working with Claude in the DnD project) regenerates the 
    - Current state: rewrite entirely so it describes only the latest end-of-session position.
    - Lessons and tactics: add anything the DM said or the fight taught.
    - Campaign at a glance: bump the session count and any changed facts.
-   - Kill count table (top of Enemies encountered): add each character's kills from the minutes and update the party total.
+   - Kill count (top of Enemies encountered): bump the table, then add a numbered entry to that character's `details.kill` recap describing the kill. Cinematic and funny is the house style. Characters with no kills keep a "closest call" paragraph instead.
 3. **Mark the folded notes resolved.**
    ```sql
    update journal_notes set resolved = true where resolved = false;

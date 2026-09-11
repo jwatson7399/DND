@@ -136,6 +136,20 @@
   details.session .body { padding: 4px 22px 22px; border-top: 1px solid var(--line); }
   .placeholder { color: var(--ink-dim); font-style: italic; }
 
+  /* Kill recaps */
+  details.kill { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--red); border-radius: var(--radius); margin: 8px 0; }
+  details.kill > summary { cursor: pointer; list-style: none; padding: 10px 16px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--ink); font-size: 17px; }
+  details.kill > summary::-webkit-details-marker { display: none; }
+  details.kill > summary::before { content: "\25B8"; font-size: 13px; color: var(--gold-dim); }
+  details.kill[open] > summary::before { content: "\25BE"; }
+  details.kill > summary .count { font-family: var(--font-sans); font-size: 12px; color: var(--ink-dim); }
+  details.kill > summary .howd { margin-left: auto; font-family: var(--font-sans); font-size: 12px; color: var(--gold); font-style: italic; }
+  details.kill .body { padding: 2px 18px 14px; border-top: 1px solid var(--line); }
+  details.kill ol { margin: 10px 0 0; }
+  details.kill li { margin-bottom: 10px; }
+  details.kill li b { color: var(--gold); font-weight: normal; }
+  details.kill .nokill { color: var(--ink-dim); font-style: italic; margin: 10px 0 0; }
+
   .topbtn { position: fixed; right: 22px; bottom: 22px; background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 999px; padding: 8px 14px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; opacity: 0; transition: opacity .2s; }
   .topbtn.show { opacity: 1; }
 
@@ -381,6 +395,46 @@
     <tr><td>Durian</td><td>0</td><td>Command ("drop") in Session 0, wolf saved.</td></tr>
     <tr><th>Party total</th><td>1</td><td>4 regular undead wolves plus the huge one still up at end of Session 0.</td></tr>
   </table>
+
+  <h4>Kill recaps</h4>
+  <p class="uncertain">Click a name to relive it. Written to be cinematic first and accurate second, but the numbers are from the minutes.</p>
+
+  <details class="kill" id="kills-jotham">
+    <summary>Jotham <span class="count">1 kill</span> <span class="howd">How'd he do it?</span></summary>
+    <div class="body">
+      <ol>
+        <li><b>Undead wolf. Session 0, round 1, the southern road.</b> A wolf with its jaw hanging half off clamped onto Jotham's cloak and hauled him backward into the brush (failed Dexterity save, DC 12). Durian shouted "drop" at it with Command; it saved and just stared at him. Then Jotham's turn came up. Flat on his back, tangled in his own cloak, he kicked the thing off, brought the longsword around for a hit, and poured a Divine Smite through it: 2d8 radiant, 18 total. The DM's narration: he drove the glowing blade down its throat and the radiant energy disintegrated the wolf from the inside out. First kill of the season, from the ground, before anyone else had landed a real hit. Then he cast Shield of Faith on himself as a bonus action, because two spell slots left is apparently no reason for caution.</li>
+      </ol>
+    </div>
+  </details>
+
+  <details class="kill" id="kills-soren">
+    <summary>Soren <span class="count">0 kills</span> <span class="howd">How's he not done it yet?</span></summary>
+    <div class="body">
+      <p class="nokill">No kills yet. Closest call: Session 0, round 1. Grabbed from behind and dragged into the woods by a wolf, so he wild shaped into a brown bear on the spot (after Foundry had to be talked into it), rolled a natural 20 on the Strength check to break the grapple, and swung twice with the bear. One hit, one miss. The wolf is still up, and it knows what a bear looks like now.</p>
+    </div>
+  </details>
+
+  <details class="kill" id="kills-aurelian">
+    <summary>Aurelian <span class="count">0 kills</span> <span class="howd">How's he not done it yet?</span></summary>
+    <div class="body">
+      <p class="nokill">No kills yet. Closest call: Session 0, round 1. Dropped the bow (adjacent enemy, disadvantage), put a shortsword into the wolf in front of him for 6, then used Cunning Action to disengage toward the tree. Perception check: the stench got stronger, and the biggest wolf he has ever seen in his life was standing right next to him. No hiding, no vaulting the tree this turn. Just eye contact.</p>
+    </div>
+  </details>
+
+  <details class="kill" id="kills-erlathon">
+    <summary>Erlathon <span class="count">0 kills</span> <span class="howd">How's he not done it yet?</span></summary>
+    <div class="body">
+      <p class="nokill">No kills yet. Closest call: Session 0, round 1. Took an 18-point bite to open the fight and passed the Constitution save that came with it. Answered with Entangle on the huge wolf and the one beside him. Both passed the Strength save, but the ground became difficult terrain, and when he backed off 35 feet toward the dead wolf the opportunity attack missed, narrated as the vines dragging at the wolf's legs. Assist, not a kill. Also the person who pointed out that nobody brought potions.</p>
+    </div>
+  </details>
+
+  <details class="kill" id="kills-durian">
+    <summary>Durian <span class="count">0 kills</span> <span class="howd">How's he not done it yet?</span></summary>
+    <div class="body">
+      <p class="nokill">No kills yet. Closest call: Session 0, round 1. Cast Command on the wolf that had Jotham by the cloak and told it to "drop." The wolf made its save and stared at him. The wolf was disintegrated by Jotham moments later, so in a sense the instruction was followed.</p>
+    </div>
+  </details>
 
   <div class="card enemy">
     <div class="name">Undead wolves</div>
