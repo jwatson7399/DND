@@ -19,7 +19,7 @@ GitHub Pages is enabled from the `main` branch, root folder. Pushing to `main` r
 
 ## How notes work
 
-Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs, Locations, Enemies, Current state, Lessons, Table notes), every session block, and a General box at the end of the page has a notes area at its bottom. On top of that, every card (each character, quest, NPC, location, and enemy) has its own compact "Add note" control, so a correction can be left right on the thing it is about.
+Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs, Locations, Enemies, Current state, Lessons, Table notes), every session block, and a General box at the end of the page has a notes area at its bottom. On top of that, every card (each character, quest, NPC, location, and enemy) and every numbered kill in the kill recaps has its own compact "Add note" control, so a correction or an extra detail can be left right on the thing it is about.
 
 Each notes area shows:
 
@@ -27,7 +27,7 @@ Each notes area shows:
 - An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Durian, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
 
-Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general`). Notes on a card use `<section>--<slug of the card name>`, for example `party--jotham` or `npcs--solara`. If a card is renamed or removed when the journal is regenerated, its notes are not lost: they show up in the parent section's list instead.
+Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general`). Notes on a card use `<section>--<slug of the card name>`, for example `party--jotham` or `npcs--solara`. Notes on a kill recap use `enemies--kills-<character>-<kill number>`, for example `enemies--kills-jotham-1`; a character with no kills yet has one control at `enemies--kills-<character>`. Kill numbers follow the order of the list, so always append new kills at the bottom. If a card is renamed or removed when the journal is regenerated, its notes are not lost: they show up in the parent section's list instead.
 
 Loading: one query fetches every note on page load and groups them by section in the browser. Open pages subscribe to Supabase realtime for instant updates from other players and also poll every 60 seconds (and whenever the tab regains focus), so a missed realtime event is picked up within a minute. If Supabase is unreachable the journal still renders fully and each box says "Notes unavailable".
 

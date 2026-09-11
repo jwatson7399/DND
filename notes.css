@@ -145,6 +145,11 @@ details.session .notes-box { margin-top: 18px; }
 .notes-box.compact .notes-status { margin-bottom: 4px; font-size: 12px; }
 .notes-box.compact .notes-form { margin-top: 6px; }
 
+/* Inside kill recap entries */
+details.kill li .notes-box.compact { margin-top: 8px; padding-top: 6px; }
+details.kill li .notes-box.compact .note-body { font-size: 14px; }
+details.kill .nokill + .notes-box.compact { margin-top: 10px; }
+
 /* General box at the very end of the journal */
 .notes-general h2 { margin-top: 48px; }
 

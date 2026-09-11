@@ -7,6 +7,7 @@
        notes list plus an "Add note" button at its bottom
      - every card inside those sections (characters, quests, NPCs, places,
        enemies) gets a compact "Add note" control of its own
+     - every numbered kill inside the kill recaps gets one too
      - a General box closes the page
    Card notes use a section id of "<parent>--<slug of card name>". If a card is
    renamed or removed later, its notes fall back to the parent section list. */
@@ -169,6 +170,45 @@
         card: false,
         mount: function (box) { h2.parentNode.insertBefore(box, next); }
       });
+    });
+    return found;
+  }
+
+  /* Kill recaps: details.kill blocks with ids like "kills-jotham". Each
+     numbered kill gets its own control (enemies--kills-jotham-1). A character
+     with no kills yet gets one control on the closest-call paragraph. */
+  function killSections() {
+    var found = [];
+    var parent = document.getElementById('enemies') ? 'enemies' : null;
+    if (!parent) return found;
+    var blocks = document.querySelectorAll('details.kill[id^="kills-"]');
+    Array.prototype.forEach.call(blocks, function (details) {
+      var who = slugify(details.id.replace('kills-', ''));
+      if (!who) return;
+      var name = details.querySelector('summary');
+      name = name ? name.childNodes[0].textContent.trim() : who;
+      var kills = details.querySelectorAll('ol > li');
+      if (kills.length) {
+        Array.prototype.forEach.call(kills, function (li, i) {
+          var title = li.querySelector('b');
+          found.push({
+            id: parent + '--kills-' + who + '-' + (i + 1),
+            label: name + ', kill ' + (i + 1) + (title ? ': ' + title.textContent.trim() : ''),
+            session: null,
+            card: true,
+            mount: function (box) { li.appendChild(box); }
+          });
+        });
+      } else {
+        var body = details.querySelector('.body') || details;
+        found.push({
+          id: parent + '--kills-' + who,
+          label: name + ', no kills yet',
+          session: null,
+          card: true,
+          mount: function (box) { body.appendChild(box); }
+        });
+      }
     });
     return found;
   }
@@ -477,7 +517,7 @@
   /* ---------- boot ---------- */
 
   function boot() {
-    var sections = h2Sections().concat(sessionSections());
+    var sections = h2Sections().concat(killSections(), sessionSections());
     sections.push(generalSection());
     boxes = sections.map(buildBox);
 
