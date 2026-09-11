@@ -1,8 +1,15 @@
 /* Journal notes: shared corrections and additions stored in Supabase.
    Loaded by index.html with the project URL and anon key as data attributes:
      <script src="notes.js" data-supabase-url="..." data-supabase-key="..."></script>
-   The journal HTML can be replaced wholesale. This file finds sections by id
-   at runtime and injects a notes box at the bottom of each one. */
+   The journal HTML can be replaced wholesale. This file finds sections and
+   cards at runtime and injects a notes area into each one:
+     - every major section (h2 with a known id) and every session block gets a
+       notes list plus an "Add note" button at its bottom
+     - every card inside those sections (characters, quests, NPCs, places,
+       enemies) gets a compact "Add note" control of its own
+     - a General box closes the page
+   Card notes use a section id of "<parent>--<slug of card name>". If a card is
+   renamed or removed later, its notes fall back to the parent section list. */
 (function () {
   'use strict';
 
@@ -20,6 +27,7 @@
   var client = null;
   var notesById = {};
   var boxes = [];
+  var mounted = {};
   var available = false;
   var loadedOnce = false;
   var author = readAuthor();
@@ -44,6 +52,22 @@
     author = value;
     try { localStorage.setItem(AUTHOR_KEY, value); } catch (e) { /* private mode */ }
     boxes.forEach(function (box) { if (box.select.value !== value) box.select.value = value; });
+  }
+
+  function slugify(text) {
+    return String(text || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40)
+      .replace(/-+$/g, '');
+  }
+
+  function cardName(card) {
+    var name = card.querySelector('.name');
+    if (!name) return '';
+    var clone = name.cloneNode(true);
+    Array.prototype.forEach.call(clone.querySelectorAll('.pill, .tag'), function (n) { n.remove(); });
+    return clone.textContent.trim();
   }
 
   function relativeTime(iso) {
@@ -81,16 +105,54 @@
     return 'Could not save the note. ' + (msg ? msg : 'Try again.');
   }
 
-  function notesFor(section) {
+  /* Notes belonging to a box. A section box also adopts notes from any card
+     id under it ("party--jotham") that no longer has a box of its own. */
+  function notesFor(box) {
+    var id = box.section.id;
+    var prefix = id + '--';
     var list = [];
-    Object.keys(notesById).forEach(function (id) {
-      if (notesById[id].section === section) list.push(notesById[id]);
+    Object.keys(notesById).forEach(function (key) {
+      var n = notesById[key];
+      if (n.section === id) { list.push(n); return; }
+      if (!box.section.card && n.section.indexOf(prefix) === 0 && !mounted[n.section]) list.push(n);
     });
     list.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
     return list;
   }
 
   /* ---------- section discovery ---------- */
+
+  function cardsBetween(h2, stop) {
+    var cards = [];
+    var node = h2.nextElementSibling;
+    while (node && node !== stop) {
+      if (node.classList && node.classList.contains('card')) cards.push(node);
+      else if (node.querySelectorAll) Array.prototype.push.apply(cards, node.querySelectorAll('.card'));
+      node = node.nextElementSibling;
+    }
+    return cards;
+  }
+
+  function cardSections(parentId, cards) {
+    var found = [];
+    var seen = {};
+    cards.forEach(function (card) {
+      var name = cardName(card);
+      var slug = slugify(name);
+      if (!slug) return;
+      var id = parentId + '--' + slug;
+      if (seen[id]) return;
+      seen[id] = true;
+      found.push({
+        id: id,
+        label: name,
+        session: null,
+        card: true,
+        mount: function (box) { card.appendChild(box); }
+      });
+    });
+    return found;
+  }
 
   function h2Sections() {
     var found = [];
@@ -99,10 +161,12 @@
       if (!h2 || h2.tagName !== 'H2') return;
       var next = h2.nextElementSibling;
       while (next && next.tagName !== 'H2') next = next.nextElementSibling;
+      found = found.concat(cardSections(id, cardsBetween(h2, next)));
       found.push({
         id: id,
         label: h2.textContent.trim(),
         session: null,
+        card: false,
         mount: function (box) { h2.parentNode.insertBefore(box, next); }
       });
     });
@@ -119,6 +183,7 @@
         id: details.id,
         label: 'Session ' + (isNaN(n) ? '' : n),
         session: isNaN(n) ? null : n,
+        card: false,
         mount: function (box) { body.appendChild(box); }
       });
     });
@@ -131,6 +196,7 @@
       id: 'general',
       label: 'General notes',
       session: null,
+      card: false,
       mount: function (box) {
         var wrap = el('div', 'notes-general');
         var h2 = el('h2', null, 'General notes');
@@ -147,7 +213,7 @@
   /* ---------- box construction ---------- */
 
   function buildBox(section) {
-    var root = el('section', 'notes-box');
+    var root = el('section', 'notes-box' + (section.card ? ' compact' : ''));
     root.setAttribute('data-section', section.id);
 
     var head = el('div', 'notes-head');
@@ -163,7 +229,12 @@
     var list = el('ul', 'notes-list');
     var status = el('p', 'notes-status', 'Loading notes...');
 
+    var add = el('button', 'notes-add', '+ Add note');
+    add.type = 'button';
+    add.title = section.card ? 'Add a note about ' + section.label : 'Add a note to ' + section.label;
+
     var form = el('form', 'notes-form');
+    form.hidden = true;
     var row = el('div', 'row');
     var label = el('label', null, 'Posting as ');
     var select = el('select');
@@ -181,15 +252,20 @@
     row.appendChild(label);
 
     var textarea = el('textarea');
-    textarea.placeholder = 'Correction, missed detail, or something the audio did not catch';
+    textarea.placeholder = section.card
+      ? 'Correction or addition about ' + section.label
+      : 'Correction, missed detail, or something the audio did not catch';
     textarea.maxLength = 2000;
     textarea.rows = 3;
 
     var actions = el('div', 'actions');
     var button = el('button', null, 'Add note');
     button.type = 'submit';
+    var cancel = el('button', 'notes-cancel', 'Cancel');
+    cancel.type = 'button';
     var error = el('div', 'notes-error', '');
     actions.appendChild(button);
+    actions.appendChild(cancel);
     actions.appendChild(error);
 
     form.appendChild(row);
@@ -199,6 +275,7 @@
     root.appendChild(head);
     root.appendChild(status);
     root.appendChild(list);
+    root.appendChild(add);
     root.appendChild(form);
 
     var box = {
@@ -208,24 +285,44 @@
       toggle: toggle,
       list: list,
       status: status,
+      add: add,
       form: form,
       select: select,
       textarea: textarea,
       button: button,
       error: error,
-      showResolved: false
+      showResolved: false,
+      composing: false
     };
 
+    add.addEventListener('click', function () { openForm(box); });
+    cancel.addEventListener('click', function () { closeForm(box); });
     select.addEventListener('change', function () { saveAuthor(select.value); error.textContent = ''; });
     toggle.addEventListener('click', function () { box.showResolved = !box.showResolved; renderBox(box); });
     form.addEventListener('submit', function (evt) { evt.preventDefault(); submit(box); });
 
     section.mount(root);
+    mounted[section.id] = true;
     return box;
   }
 
+  function openForm(box) {
+    box.composing = true;
+    box.form.hidden = false;
+    box.add.hidden = true;
+    box.error.textContent = '';
+    if (box.select.value) box.textarea.focus(); else box.select.focus();
+  }
+
+  function closeForm(box) {
+    box.composing = false;
+    box.form.hidden = true;
+    box.add.hidden = !(available && client);
+    box.error.textContent = '';
+  }
+
   function renderBox(box) {
-    var all = notesFor(box.section.id);
+    var all = notesFor(box);
     var resolved = all.filter(function (n) { return n.resolved; });
     var open = all.length - resolved.length;
 
@@ -233,10 +330,10 @@
     box.list.textContent = '';
     all.forEach(function (note) {
       if (note.resolved && !box.showResolved) return;
-      var li = el('li', note.resolved ? 'resolved' : (note.pending ? 'pending' : ''));
+      var li = el('li', note.resolved ? 'resolved' : '');
       var meta = el('div', 'note-meta');
       meta.appendChild(el('span', 'note-author', note.author));
-      var time = el('span', 'note-time', ' ' + (note.pending ? 'saving...' : relativeTime(note.created_at)));
+      var time = el('span', 'note-time', ' ' + relativeTime(note.created_at));
       time.title = note.created_at ? new Date(note.created_at).toLocaleString() : '';
       meta.appendChild(time);
       li.appendChild(meta);
@@ -251,19 +348,23 @@
       box.toggle.hidden = true;
     }
 
+    var canPost = !!(available && client);
     if (!available) {
       box.status.hidden = false;
       box.status.textContent = loadedOnce ? 'Notes unavailable. Showing the last copy that loaded.' : 'Notes unavailable.';
       if (!loadedOnce) box.list.textContent = '';
-    } else if (!all.length) {
+    } else if (!all.length && !box.section.card) {
       box.status.hidden = false;
       box.status.textContent = 'No notes yet.';
     } else {
       box.status.hidden = true;
     }
 
-    var canPost = available && client;
-    box.form.classList.toggle('disabled', !canPost);
+    /* Compact card boxes hide their header until something is there to show. */
+    box.root.classList.toggle('empty', box.section.card && !all.length);
+
+    box.add.hidden = box.composing || !canPost;
+    if (!canPost && box.composing) closeForm(box);
     box.select.disabled = !canPost;
     box.textarea.disabled = !canPost;
     if (!box.inFlight) box.button.disabled = !canPost;
@@ -274,13 +375,18 @@
     renderBadges();
   }
 
+  /* Table of contents badges: unresolved notes per top-level section,
+     including notes on the cards inside it. */
   function renderBadges() {
     var counts = {};
     Object.keys(notesById).forEach(function (id) {
       var n = notesById[id];
-      if (!n.resolved) counts[n.section] = (counts[n.section] || 0) + 1;
+      if (n.resolved) return;
+      var top = n.section.split('--')[0];
+      counts[top] = (counts[top] || 0) + 1;
     });
     boxes.forEach(function (box) {
+      if (box.section.card) return;
       var link = document.querySelector('nav.toc a[href="#' + box.section.id + '"]');
       if (!link) return;
       var badge = link.querySelector('.notes-badge');
@@ -312,6 +418,7 @@
         if (res.error) throw res.error;
         notesById[res.data.id] = res.data;
         box.textarea.value = '';
+        closeForm(box);
         renderAll();
       })
       .catch(function (err) {

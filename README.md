@@ -18,11 +18,15 @@ GitHub Pages is enabled from the `main` branch, root folder. Pushing to `main` r
 
 ## How notes work
 
-Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs, Locations, Enemies, Current state, Lessons, Table notes), every session block, and a General box at the end of the page has a notes area. Each one shows:
+Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs, Locations, Enemies, Current state, Lessons, Table notes), every session block, and a General box at the end of the page has a notes area at its bottom. On top of that, every card (each character, quest, NPC, location, and enemy) has its own compact "Add note" control, so a correction can be left right on the thing it is about.
 
-- Existing notes for that section, oldest first, with author, relative time, and body. Resolved notes are hidden behind a "show resolved (n)" toggle and render dimmed and struck through when shown.
-- A "Posting as" dropdown with the six allowed authors: Jotham, Soren, Aurelian, Erlathon, Durian, DM. The choice is saved in the browser (localStorage) and preselected next time. You must pick a name before posting.
-- A textarea and an "Add note" button. The button is disabled while the request is in flight. Success appends the note and clears the box. Failure shows a one-line message under the button.
+Each notes area shows:
+
+- Existing notes, oldest first, with author, relative time, and body. Resolved notes are hidden behind a "show resolved (n)" toggle and render dimmed and struck through when shown.
+- An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Durian, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
+- The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
+
+Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general`). Notes on a card use `<section>--<slug of the card name>`, for example `party--jotham` or `npcs--solara`. If a card is renamed or removed when the journal is regenerated, its notes are not lost: they show up in the parent section's list instead.
 
 Loading: one query fetches every note on page load and groups them by section in the browser. Open pages subscribe to Supabase realtime for instant updates from other players and also poll every 60 seconds (and whenever the tab regains focus), so a missed realtime event is picked up within a minute. If Supabase is unreachable the journal still renders fully and each box says "Notes unavailable".
 
@@ -50,6 +54,7 @@ The maintainer (Julian, working with Claude in the DnD project) regenerates the 
    - Current state: rewrite entirely so it describes only the latest end-of-session position.
    - Lessons and tactics: add anything the DM said or the fight taught.
    - Campaign at a glance: bump the session count and any changed facts.
+   - Kill count table (top of Enemies encountered): add each character's kills from the minutes and update the party total.
 3. **Mark the folded notes resolved.**
    ```sql
    update journal_notes set resolved = true where resolved = false;
@@ -62,7 +67,7 @@ When regenerating `index.html`, keep two things from the current file so the not
 - In `<head>`: `<link rel="stylesheet" href="notes.css">`
 - At the end of `<body>`, the three lines marked `Notes feature`: the Supabase JS CDN script and the `notes.js` script tag with its two data attributes.
 
-Nothing else in the journal needs to know about notes. `notes.js` discovers sections by their ids at runtime (`overview`, `story-so-far`, `party`, `quests`, `npcs`, `locations`, `enemies`, `state`, `lessons`, `table`, plus every `details.session` whose id starts with `session-`), so new session blocks get a notes box automatically. Keep those ids stable or old notes will stop lining up with their sections.
+Nothing else in the journal needs to know about notes. `notes.js` discovers sections by their ids at runtime (`overview`, `story-so-far`, `party`, `quests`, `npcs`, `locations`, `enemies`, `state`, `lessons`, `table`, plus every `details.session` whose id starts with `session-`) and every `.card` with a `.name` inside those sections, so new session blocks and new cards get an Add note control automatically. Keep the section ids stable or old notes will stop lining up with their sections.
 
 Quick check after pushing: open the live URL, confirm the badges and boxes appear, and post a test note as DM.
 
@@ -76,7 +81,7 @@ Table `journal_notes`:
 |--------|------|-------|
 | id | uuid | primary key, default `gen_random_uuid()` |
 | created_at | timestamptz | default `now()` |
-| section | text | not null. Matches the section id in the HTML. Checked against `^[a-z0-9-]{1,64}$`. |
+| section | text | not null. The section id in the HTML, or `<section>--<card slug>` for a card. Checked against `^[a-z0-9-]{1,64}$`. |
 | author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Durian, DM. |
 | body | text | not null. Check constraint: length 1 to 2000. |
 | resolved | boolean | not null, default false. Set by the maintainer only. |
