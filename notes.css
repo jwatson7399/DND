@@ -72,6 +72,8 @@ details.session .notes-box { margin-top: 18px; }
 }
 .note-tag.resolved { color: var(--green, #6f9a5c); border-color: var(--green, #6f9a5c); }
 .note-tag.kept { color: var(--blue, #5f8fb3); border-color: var(--blue, #5f8fb3); }
+.note-tag.deferred { color: var(--gold, #c9a35a); border-color: var(--gold-dim, #8f7439); }
+.note-tag.open { color: var(--red, #b5443a); border-color: var(--red, #b5443a); }
 .note-resolution {
   margin-top: 3px;
   color: var(--ink-dim, #b3a58b);

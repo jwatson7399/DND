@@ -25,7 +25,7 @@ Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs
 
 Each notes area shows:
 
-- Existing notes, oldest first, with author, relative time, and body. Notes marked kept carry a blue "kept" tag and stay visible. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
+- Existing notes, oldest first, with author, relative time, body, and a status tag. Open notes show a red "open" tag. Kept notes show a blue "kept" tag and stay visible. Notes deferred to the next rebuild show a gold "next rebuild" tag and stay visible until then. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
 - An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Durian, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
 
@@ -33,10 +33,11 @@ Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general
 
 Loading: one query fetches every note on page load and groups them by section in the browser. Open pages subscribe to Supabase realtime for instant updates from other players and also poll every 60 seconds (and whenever the tab regains focus), so a missed realtime event is picked up within a minute. If Supabase is unreachable the journal still renders fully and each box says "Notes unavailable".
 
-Every note is in one of three states, set by the maintainer only:
+Every note is in one of four states, set by the maintainer only:
 
 - **open**: shown in the box, counts toward the badge in the table of contents. A pending decision.
 - **kept**: shown with a "kept" tag, does not count toward the badge. For jokes, in-character objections, and context that should stay visible as is.
+- **deferred**: shown with a "next rebuild" tag, does not count toward the badge. The decision is made: the fact becomes canon when the next session is added, and the note is resolved then. Until that rebuild it stays as a visible note on the current journal.
 - **resolved**: hidden behind "Resolved history", struck through when expanded, with the resolution line underneath. For notes that were folded into the journal or needed no change.
 
 The table of contents shows a gold count badge next to any section with open notes so the maintainer can see where the pending decisions are.
@@ -49,14 +50,14 @@ The maintainer (Julian, working with Claude in the DnD project) regenerates the 
 
 Outline:
 
-1. **Read the open notes.** Open means `resolved = false` and `kept = false`. In the Supabase dashboard (Table Editor, `journal_notes`) or through the Supabase connector:
+1. **Read the open notes, and at a rebuild the deferred notes too.** Open means `resolved = false`, `kept = false`, `deferred = false`. In the Supabase dashboard (Table Editor, `journal_notes`) or through the Supabase connector:
    ```sql
    select id, section, session, author, body, created_at
    from journal_notes
-   where resolved = false and kept = false
+   where resolved = false and kept = false and deferred = false
    order by section, created_at;
    ```
-2. **Decide each note with Julian.** Fold it in, keep it visible, resolve without changes, or skip.
+2. **Decide each note with Julian.** Fold it in now, fold it in at the next rebuild, keep it visible, resolve without changes, or skip. Deferred notes from earlier rounds are folded in as canon without asking again.
 3. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), and touch whatever the session changed:
    - Session minutes: fill the next `details.session` block (Summary, Minutes, Roleplay moments, Rolls), add a new placeholder block below it, and add a matching sidebar link.
    - Story so far: one new paragraph under an "After Session N" heading.
@@ -71,6 +72,7 @@ Outline:
    ```sql
    update journal_notes set resolved = true, resolution = 'Folded into Quests' where id = '...';
    update journal_notes set kept = true, resolution = 'Kept as party lore' where id = '...';
+   update journal_notes set deferred = true, resolution = 'Canon from Session 1: ...' where id = '...';
    ```
    `resolved_at` is stamped by a trigger. Never delete notes.
 5. **Replace `index.html`, commit, push.** Pages redeploys automatically.
@@ -101,13 +103,14 @@ Table `journal_notes`:
 | resolved | boolean | not null, default false. Set by the maintainer only. Hidden behind Resolved history on the page. |
 | resolved_at | timestamptz | nullable. Stamped by a trigger when resolved flips to true, cleared if reopened. |
 | kept | boolean | not null, default false. Set by the maintainer only. Stays visible, does not count as a to-do. |
+| deferred | boolean | not null, default false. Set by the maintainer only. Stays visible, does not count as a to-do, folded in as canon at the next rebuild. Cannot be true together with kept. |
 | resolution | text | nullable, 1 to 300 characters. What was done with the note. Shown under it in the history. |
 | session | integer | nullable. Set automatically for notes posted inside a session block. |
 
 Row level security is on. Policies for the `anon` role:
 
 - `select`: all rows.
-- `insert`: allowed when `author` is in the allowed list, `body` length is 1 to 2000, and the note starts open: `resolved = false`, `kept = false`, `resolution` null.
+- `insert`: allowed when `author` is in the allowed list, `body` length is 1 to 2000, and the note starts open: `resolved = false`, `kept = false`, `deferred = false`, `resolution` null.
 - No `update` or `delete` policy. In addition, `update`, `delete`, and `truncate` privileges are revoked from `anon` and `authenticated`, so resolving or removing notes can only happen from the dashboard or with the service role key.
 
 Rate limit: a `before insert` trigger (`journal_notes_rate_limit`) rejects the row when the same author already has 20 or more notes in the last 10 minutes. The page turns that error into a one-line "slow down" message. The function runs as `security definer` with `execute` revoked from `anon` and `authenticated`, so it cannot be called over the API.

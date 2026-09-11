@@ -17,6 +17,7 @@ create table if not exists public.journal_notes (
   resolved    boolean not null default false,
   resolved_at timestamptz,
   kept        boolean not null default false,
+  deferred    boolean not null default false,
   resolution  text,
   session     integer,
   constraint journal_notes_author_allowed
@@ -26,7 +27,9 @@ create table if not exists public.journal_notes (
   constraint journal_notes_section_shape
     check (section ~ '^[a-z0-9-]{1,64}$'),
   constraint journal_notes_resolution_length
-    check (resolution is null or char_length(resolution) between 1 and 300)
+    check (resolution is null or char_length(resolution) between 1 and 300),
+  constraint journal_notes_one_visible_state
+    check (not (kept and deferred))
 );
 
 -- Note states, set by the maintainer only (anon cannot update):
@@ -34,6 +37,9 @@ create table if not exists public.journal_notes (
 --             toward the table of contents badge. Needs a decision.
 --   kept:     kept = true. Stays visible for good (lore, jokes, useful
 --             context) but no longer counts as a to-do.
+--   deferred: deferred = true. Stays visible for now, and is folded into
+--             the journal as canon at the next session rebuild, then
+--             resolved. Does not count as a to-do in between.
 --   resolved: resolved = true. Hidden behind "Resolved history" in the box,
 --             struck through when expanded. resolution says what was done.
 
@@ -109,8 +115,8 @@ create trigger journal_notes_track_resolved
 -- Row level security. The page uses the anon key only.
 --   select: everyone can read every row.
 --   insert: allowed when author is on the list, body is 1 to 2000 chars,
---           and the note starts open (resolved false, kept false, no
---           resolution text).
+--           and the note starts open (resolved false, kept false,
+--           deferred false, no resolution text).
 --   update and delete: nobody through the API. The maintainer resolves or
 --   removes notes from the Supabase dashboard (or a connector using the
 --   service role), which bypasses RLS.
@@ -134,6 +140,7 @@ create policy "journal_notes anon insert"
     and char_length(body) between 1 and 2000
     and resolved = false
     and kept = false
+    and deferred = false
     and resolution is null
   );
 

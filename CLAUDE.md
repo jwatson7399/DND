@@ -4,7 +4,11 @@ Static Season 2 campaign journal on GitHub Pages with party notes stored in Supa
 
 ## When asked to "resolve notes"
 
-Follow `RESOLVE_NOTES.md` exactly. In short: read the open notes from the `journal_notes` table, ask Julian about each one with multiple-choice questions (fold it in, keep it visible, resolve without changes, skip), apply the answers to `index.html` and the table, verify, commit, push.
+Follow `RESOLVE_NOTES.md` exactly. In short: read the open notes from the `journal_notes` table, ask Julian about each one with multiple-choice questions (fold it in now, fold it in at the next rebuild, keep it visible, resolve without changes, skip), apply the answers to `index.html` and the table, verify, commit, push.
+
+## When adding a new session (a rebuild)
+
+Follow the rebuild section of `RESOLVE_NOTES.md`: deferred notes become canon in the rewritten sections and are then resolved, open notes get asked about as usual.
 
 ## House rules
 

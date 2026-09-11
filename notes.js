@@ -364,13 +364,13 @@
   function renderBox(box) {
     var all = notesFor(box);
     var resolved = all.filter(function (n) { return n.resolved; });
-    var open = all.filter(function (n) { return !n.resolved && !n.kept; }).length;
+    var open = all.filter(function (n) { return !n.resolved && !n.kept && !n.deferred; }).length;
 
     box.count.textContent = open ? '(' + open + ')' : '';
     box.list.textContent = '';
     all.forEach(function (note) {
       if (note.resolved && !box.showResolved) return;
-      var li = el('li', note.resolved ? 'resolved' : (note.kept ? 'kept' : ''));
+      var li = el('li', note.resolved ? 'resolved' : (note.kept ? 'kept' : (note.deferred ? 'deferred' : 'open')));
       var meta = el('div', 'note-meta');
       meta.appendChild(el('span', 'note-author', note.author));
       var time = el('span', 'note-time', ' ' + relativeTime(note.created_at));
@@ -385,6 +385,14 @@
         var keptTag = el('span', 'note-tag kept', 'kept');
         keptTag.title = 'Staying visible on purpose. Not a pending correction.';
         meta.appendChild(keptTag);
+      } else if (note.deferred) {
+        var deferTag = el('span', 'note-tag deferred', 'next rebuild');
+        deferTag.title = 'Stays visible for now. Becomes canon when the next session is added.';
+        meta.appendChild(deferTag);
+      } else {
+        var openTag = el('span', 'note-tag open', 'open');
+        openTag.title = 'Waiting for the journal keeper to decide what to do with it.';
+        meta.appendChild(openTag);
       }
       li.appendChild(meta);
       li.appendChild(el('div', 'note-body', note.body));
@@ -426,13 +434,13 @@
     renderBadges();
   }
 
-  /* Table of contents badges: open notes (not resolved, not kept) per
-     top-level section, including notes on the cards inside it. */
+  /* Table of contents badges: open notes (not resolved, kept, or deferred)
+     per top-level section, including notes on the cards inside it. */
   function renderBadges() {
     var counts = {};
     Object.keys(notesById).forEach(function (id) {
       var n = notesById[id];
-      if (n.resolved || n.kept) return;
+      if (n.resolved || n.kept || n.deferred) return;
       var top = n.section.split('--')[0];
       counts[top] = (counts[top] || 0) + 1;
     });
