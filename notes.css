@@ -1,0 +1,136 @@
+/* Journal notes: shared corrections and additions.
+   Loaded by index.html alongside notes.js. Uses the journal's CSS variables
+   so it inherits the parchment theme without restyling the journal itself. */
+
+.notes-box {
+  margin: 26px 0 8px;
+  padding: 14px 16px 12px;
+  background: var(--panel-2, #241e17);
+  border: 1px dashed var(--line, #3a3128);
+  border-radius: var(--radius, 10px);
+  font-family: var(--font-sans, sans-serif);
+  font-size: 13px;
+  color: var(--ink, #e8dcc4);
+}
+details.session .notes-box { margin-top: 18px; }
+
+.notes-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.notes-title {
+  color: var(--gold-dim, #8f7439);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+}
+.notes-title b { color: var(--ink-dim, #b3a58b); font-weight: normal; letter-spacing: 0; text-transform: none; }
+.notes-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink-dim, #b3a58b);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+.notes-toggle:hover { color: var(--gold, #c9a35a); }
+
+.notes-list { list-style: none; margin: 0 0 10px; padding: 0; }
+.notes-list li {
+  margin: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--line, #3a3128);
+}
+.notes-list li:first-child { border-top: none; }
+.note-meta { color: var(--ink-dim, #b3a58b); font-size: 12px; margin-bottom: 2px; }
+.note-author { color: var(--gold, #c9a35a); }
+.note-body {
+  font-family: var(--font-serif, serif);
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.notes-list li.resolved { opacity: 0.55; }
+.notes-list li.resolved .note-body { text-decoration: line-through; }
+.notes-list li.resolved .note-meta::after { content: " resolved"; color: var(--green, #6f9a5c); }
+.notes-list li.pending { opacity: 0.7; }
+
+.notes-status { color: var(--ink-dim, #b3a58b); font-style: italic; margin: 0 0 10px; }
+
+.notes-form { margin: 0; }
+.notes-form .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.notes-form label { color: var(--ink-dim, #b3a58b); display: inline-flex; align-items: center; gap: 6px; }
+.notes-form select,
+.notes-form textarea,
+.notes-form button {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 13px;
+  color: var(--ink, #e8dcc4);
+  background: var(--panel, #1d1813);
+  border: 1px solid var(--line, #3a3128);
+  border-radius: 6px;
+}
+.notes-form select { padding: 5px 8px; }
+.notes-form textarea {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  resize: vertical;
+  line-height: 1.45;
+}
+.notes-form textarea:focus,
+.notes-form select:focus { outline: none; border-color: var(--gold-dim, #8f7439); }
+.notes-form button {
+  padding: 6px 14px;
+  color: var(--gold, #c9a35a);
+  border-color: var(--gold-dim, #8f7439);
+  cursor: pointer;
+}
+.notes-form button:hover:not(:disabled) { background: var(--panel-2, #241e17); }
+.notes-form button:disabled { opacity: 0.5; cursor: default; }
+.notes-form .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.notes-error { color: var(--red, #b5443a); font-size: 12px; min-height: 1em; }
+.notes-form.disabled select,
+.notes-form.disabled textarea { opacity: 0.5; }
+
+/* General box at the very end of the journal */
+.notes-general h2 { margin-top: 48px; }
+
+/* Unresolved count badge in the table of contents */
+.notes-badge {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gold, #c9a35a);
+  color: var(--bg, #14110d);
+  font-size: 10.5px;
+  font-weight: bold;
+  line-height: 17px;
+  text-align: center;
+  vertical-align: 1px;
+}
+
+@media (max-width: 860px) {
+  .notes-box { padding: 12px 12px 10px; }
+  .notes-form select { flex: 1 1 auto; }
+  .notes-form .actions button { width: 100%; }
+}
+@media print {
+  .notes-box, .notes-badge { display: none; }
+}

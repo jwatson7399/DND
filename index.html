@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Season 2 Campaign Journal: Thornhaven</title>
+<style>
+  :root {
+    --bg: #14110d;
+    --panel: #1d1813;
+    --panel-2: #241e17;
+    --ink: #e8dcc4;
+    --ink-dim: #b3a58b;
+    --gold: #c9a35a;
+    --gold-dim: #8f7439;
+    --red: #b5443a;
+    --green: #6f9a5c;
+    --blue: #5f8fb3;
+    --line: #3a3128;
+    --radius: 10px;
+    --font-serif: "Georgia", "Times New Roman", serif;
+    --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  a { color: var(--gold); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  nav.toc {
+    width: 270px;
+    flex: 0 0 270px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 22px 18px 40px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+  }
+  nav.toc .brand {
+    font-family: var(--font-serif);
+    color: var(--gold);
+    font-size: 17px;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px;
+  }
+  nav.toc .sub { color: var(--ink-dim); font-size: 12px; margin-bottom: 18px; }
+  nav.toc ul { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    color: var(--ink-dim);
+    padding: 5px 8px;
+    border-left: 2px solid transparent;
+    border-radius: 4px;
+  }
+  nav.toc a:hover { color: var(--ink); background: var(--panel-2); text-decoration: none; }
+  nav.toc a.active { color: var(--gold); border-left-color: var(--gold); background: var(--panel-2); }
+  nav.toc ul ul a { padding-left: 22px; font-size: 12.5px; }
+  nav.toc .group { color: var(--gold-dim); text-transform: uppercase; letter-spacing: 1.2px; font-size: 10.5px; margin: 16px 0 4px 8px; }
+
+  main { flex: 1; min-width: 0; padding: 40px 56px 120px; max-width: 980px; }
+
+  h1 { font-size: 36px; color: var(--gold); margin: 0 0 6px; font-weight: normal; letter-spacing: 0.5px; }
+  .tagline { color: var(--ink-dim); font-style: italic; margin-bottom: 28px; }
+  h2 {
+    font-size: 25px; color: var(--gold); font-weight: normal;
+    margin: 48px 0 14px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 18px; color: var(--ink); margin: 26px 0 8px; font-weight: normal; }
+  h3 .tag { font-family: var(--font-sans); font-size: 11px; color: var(--ink-dim); margin-left: 8px; letter-spacing: 1px; text-transform: uppercase; }
+  h4 { font-size: 15px; color: var(--gold-dim); margin: 18px 0 6px; font-weight: normal; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-sans); }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 5px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 20px; margin: 12px 0;
+  }
+  .card.pc { border-left: 3px solid var(--gold); }
+  .card.npc { border-left: 3px solid var(--blue); }
+  .card.enemy { border-left: 3px solid var(--red); }
+  .card.place { border-left: 3px solid var(--green); }
+  .card .name { font-size: 18px; color: var(--ink); }
+  .card .meta { font-family: var(--font-sans); font-size: 12px; color: var(--ink-dim); margin-bottom: 8px; }
+  .card .log { font-family: var(--font-sans); font-size: 13px; color: var(--ink-dim); border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 8px; }
+  .card .log b { color: var(--gold-dim); font-weight: normal; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .grid .card { margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-family: var(--font-sans); font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--gold-dim); font-weight: normal; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+  tr:hover td { background: var(--panel-2); }
+
+  .pill { display: inline-block; font-family: var(--font-sans); font-size: 11px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-dim); margin-right: 4px; }
+  .pill.active { border-color: var(--gold); color: var(--gold); }
+  .pill.done { border-color: var(--green); color: var(--green); }
+  .pill.failed { border-color: var(--red); color: var(--red); }
+  .pill.rumor { border-color: var(--blue); color: var(--blue); }
+
+  .callout { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: var(--radius); padding: 12px 18px; margin: 14px 0; }
+  .callout.warn { border-left-color: var(--red); }
+  .callout .label { font-family: var(--font-sans); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-dim); margin-bottom: 4px; }
+  .uncertain { color: var(--ink-dim); font-style: italic; }
+  .quote { font-style: italic; color: var(--ink-dim); border-left: 2px solid var(--gold-dim); padding-left: 12px; margin: 8px 0 12px; }
+
+  /* Sessions */
+  details.session { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0; }
+  details.session > summary {
+    cursor: pointer; list-style: none; padding: 14px 20px; font-size: 20px; color: var(--gold);
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  details.session > summary::-webkit-details-marker { display: none; }
+  details.session > summary::before { content: "\25B8"; font-size: 14px; color: var(--gold-dim); }
+  details.session[open] > summary::before { content: "\25BE"; }
+  details.session > summary .date { font-family: var(--font-sans); font-size: 12px; color: var(--ink-dim); }
+  details.session .body { padding: 4px 22px 22px; border-top: 1px solid var(--line); }
+  .placeholder { color: var(--ink-dim); font-style: italic; }
+
+  .topbtn { position: fixed; right: 22px; bottom: 22px; background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 999px; padding: 8px 14px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; opacity: 0; transition: opacity .2s; }
+  .topbtn.show { opacity: 1; }
+
+  .menu-btn { display: none; }
+  @media (max-width: 860px) {
+    .layout { display: block; }
+    nav.toc { position: fixed; left: -290px; transition: left .2s; z-index: 10; }
+    nav.toc.open { left: 0; }
+    main { padding: 24px 18px 100px; }
+    .menu-btn { display: inline-block; position: fixed; top: 12px; left: 12px; z-index: 11; background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 6px; padding: 6px 10px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; }
+    h1 { margin-top: 30px; font-size: 28px; }
+  }
+  @media print {
+    nav.toc, .topbtn, .menu-btn { display: none; }
+    body { background: #fff; color: #111; }
+    .card, details.session, .callout { border-color: #ccc; background: #fff; }
+    h1, h2, nav a { color: #333; }
+    details.session { page-break-inside: avoid; }
+    details:not([open]) > *:not(summary) { display: block; }
+  }
+</style>
+<link rel="stylesheet" href="notes.css">
+</head>
+<body>
+<button class="menu-btn" onclick="document.querySelector('nav.toc').classList.toggle('open')">Contents</button>
+
+<div class="layout">
+<nav class="toc" id="toc">
+  <div class="brand">Season 2: Thornhaven</div>
+  <div class="sub">Campaign journal and running summary</div>
+  <ul>
+    <li><a href="#overview">Campaign at a glance</a></li>
+    <li><a href="#story-so-far">Story so far</a></li>
+    <li><a href="#party">The party</a></li>
+    <li><a href="#quests">Quests</a></li>
+    <li><a href="#npcs">NPCs and factions</a></li>
+    <li><a href="#locations">Locations and lore</a></li>
+    <li><a href="#enemies">Enemies encountered</a></li>
+    <li><a href="#state">Current state and open threads</a></li>
+    <li><a href="#lessons">Lessons and tactics</a></li>
+    <li><a href="#sessions">Session minutes</a>
+      <ul>
+        <li><a href="#session-0">Session 0</a></li>
+        <li><a href="#session-1">Session 1</a></li>
+        <li><a href="#session-2">Session 2</a></li>
+      </ul>
+    </li>
+    <li><a href="#table">Table notes and logistics</a></li>
+    <li><a href="#howto">How to add a session</a></li>
+  </ul>
+</nav>
+
+<main>
+  <h1>Season 2 Campaign Journal</h1>
+  <div class="tagline">Thornhaven and the Emerald Canopy. 2024 rules. Running record, updated after every session.</div>
+
+  <!-- ============================================================ -->
+  <h2 id="overview">Campaign at a glance</h2>
+  <table>
+    <tr><th>Setting</th><td>Thornhaven, a druid and elven city built into the Star Bark trees of the Emerald Canopy, on a continent across the ocean from where Season 1 took place</td></tr>
+    <tr><th>Party level</th><td>Not stated during the session. Fill in once confirmed.</td></tr>
+    <tr><th>Party name</th><td>Not yet chosen. To be voted on in Discord before Session 1. Jotham told the head druid "the Pool Walkers" as a joke, so that is what the council currently thinks they are called</td></tr>
+    <tr><th>Party leader</th><td>Jotham (volunteered when the council asked who leads the group)</td></tr>
+    <tr><th>Main hook</th><td>Wardens of Thornhaven are vanishing, and so are the adventurers who answered the call for help. The council is testing new parties with small tasks before trusting them with the real problem</td></tr>
+    <tr><th>Sessions played</th><td>1 (Session 0, Sept 10, 2026)</td></tr>
+    <tr><th>Difficulty</th><td>DM has said this season is deliberately harder than Season 1 and is built around teamwork</td></tr>
+  </table>
+
+  <!-- ============================================================ -->
+  <h2 id="story-so-far">Story so far</h2>
+  <p class="uncertain">Running narrative. Add a paragraph per session so a new reader can catch up in two minutes.</p>
+
+  <h4>After Session 0</h4>
+  <p>The party sailed across the ocean and landed on the shore of a continent none of them had seen before, where the forests dwarf anything back home. A Warden of Thornhaven met them at the dock and marched them through the strange, sweet-smelling, light-filled forest to the city itself: a network of stone buildings and druid-grown bridges wound around the trunks of enormous Star Bark trees. They climbed from the shadowy Rootway at the base, through the smoky workshops of the Boughs, up to the Canopy, where Soren recognized the Star Bark trees as the magical heart of the whole region.</p>
+  <p>In the grand hall they walked across a pool of magical water that holds weight like glass. A rival party, the Dawn Striders, was already there, and their long-haired bard leader picked a fight with Jotham almost immediately. The city's head druid (green-haired, older, name not yet learned) explained that Thornhaven's wardens have been disappearing, that earlier adventurers who came to help have also vanished, and that the two parties would each be given a task to prove themselves. When the bard tripped and fell through the "solid" water (with some unseen help from the party), the druid decided Jotham looked like the more capable of the two leaders.</p>
+  <p>Jotham chose the road-clearing task over the wolf task, so the Dawn Striders took the wolves. Solara, Master of Trade, rushed the party into a wagon and explained that traders and citizens have gone missing along the trade routes, that the wardens are stretched thin, and that she will watch from a distance rather than help directly. At the forest road they found a fallen tree blocking the main southern route, a bridge to the east, a path to the west, and an overpowering stench of rot. Durian set the fallen tree alight, and out of the brush came undead wolves. Erlathon was bitten for 18 damage in the first exchange, Soren and Jotham were dragged into the woods by their cloaks, and something much larger stalked the treeline. Jotham smote one wolf into ash with radiant energy, Soren wild shaped into a bear to break free, and the session ended mid-fight with four wolves and one very large one still standing.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="party">The party</h2>
+  
+  <div class="card pc">
+    <div class="name">Jotham</div>
+    <div class="meta">Paladin. Drow heritage. Party leader.</div>
+    <p>Front-line melee with a longsword and shield. Divine Smite (radiant), Shield of Faith. Has a past that let him read the Rootway as thief territory at a glance. Quick with a sarcastic remark, and quick to get into a banter fight with anyone who condescends to him.</p>
+    <div class="log"><b>Session 0:</b> Volunteered as leader. Sarcastically named the party "the Pool Walkers." Chose the road task after checking with the group. Dragged into the woods by an undead wolf, then killed it in one round with longsword plus Divine Smite (18 damage, radiant disintegrated it). Cast Shield of Faith on himself. Said he has two spell slots left for smites.</div>
+  </div>
+
+  <div class="card pc">
+    <div class="name">Soren</div>
+    <div class="meta">Druid 3, Circle of the Moon.</div>
+    <p>Recognized the Star Bark trees from druid lore. Can wild shape into a brown bear (CR 1, multiattack). Foundry sheet currently caps wild shape at CR 1/4, which the DM is fixing; brown bear stats need to be ready before the next session.</p>
+    <div class="log"><b>Session 0:</b> Nature check identified the Star Bark trees. Grappled and pulled into the brush by a wolf. Wild shaped into a brown bear, rolled a 20 to escape, landed one bear attack and missed the other. Ended the round back to back with Erlathon.</div>
+  </div>
+
+  <div class="card pc">
+    <div class="name">Aurelian</div>
+    <div class="meta">Rogue 3 (has the Shield spell, so likely Arcane Trickster). Possibly a halfling (someone rerolled with Lucky).</div>
+    <p>Scout and skirmisher. Bow and shortsword. Cunning Action. The DM noted that Aurelian's player "knows this campaign a little," so Aurelian may have useful meta knowledge. Tends to go off alone; DM flagged this as risky for this season.</p>
+    <div class="log"><b>Session 0:</b> First onto the magical water. Stealth 20 scouting ahead, but the wolves' passive perception beat it. Wolf attack on him missed (Shield not needed). Dropped bow, hit a wolf with shortsword for 6, disengaged with Cunning Action, then spotted the biggest wolf he has ever seen right beside him.</div>
+  </div>
+
+  <div class="card pc">
+    <div class="name">Erlathon</div>
+    <div class="meta">Ranger 3. 35 ft speed (likely wood elf).</div>
+    <p>Archer. Hunter's Mark, Entangle. Best nose in the party: first to smell the undead. Knows ranger hand signals.</p>
+    <div class="log"><b>Session 0:</b> Smelled the rot and signaled the party. Bitten by an undead wolf for 18 in the opening round; passed a Constitution save against something from the bite. "Badly injured" and one hit from dropping. Cast Entangle on the big wolf and the one next to him; both saved, but the area is now difficult terrain. Moved away and the opportunity attack missed.</div>
+  </div>
+
+  <div class="card pc">
+    <div class="name">Durian</div>
+    <div class="meta">Bard 3.</div>
+    <p>Caster and trickster. Known spells or cantrips seen: Mage Hand, Elementalism, Command, Tasha's Hideous Laughter. Arcana checks.</p>
+    <div class="log"><b>Session 0:</b> Read the magical energy in the hall (Arcana 15: the tiefling in the Dawn Striders is strong). Used Mage Hand to tie the rival bard's shoelaces together in front of the head druid. Set fire to the fallen tree with Elementalism, which flushed out the wolves. Cast Command ("drop") on the wolf holding Jotham; it saved. Planning Tasha's Hideous Laughter next.</div>
+  </div>
+
+  <div class="callout">
+    <div class="label">Party gaps identified in Session 0</div>
+    <ul>
+      <li>Nobody has healing potions. Everyone used theirs in the Season 1 finale and nobody restocked before boarding the ship.</li>
+      <li>The party does not know each other's spells and abilities. Agreed to compare kits so they can plan as "a unified brain."</li>
+      <li>Only Jotham has radiant damage, which is what actually kills the undead wolves. Everyone else needs to protect him and set up his smites.</li>
+    </ul>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="quests">Quests</h2>
+
+  <h3>Main thread <span class="tag">Season arc</span></h3>
+  <div class="card">
+    <div class="name">The Vanishing Wardens <span class="pill active">Active</span></div>
+    <div class="meta">Given by: the head druid of Thornhaven. Session 0.</div>
+    <p>Wardens who have protected Thornhaven for ages are disappearing. Thornhaven put out a call for adventurers; those who answered have also gone missing. The council extended the invitation across the ocean to find a stronger party. The head druid was reluctant to invite outsiders and did so at Solara's urging. Solara says she will brief the party further once they have proven themselves.</p>
+    <div class="log"><b>Status:</b> Not yet directly assigned. Unlocks after the proving task.</div>
+  </div>
+
+  <h3>Proving tasks <span class="tag">Session 0</span></h3>
+  <div class="card">
+    <div class="name">Clear the Southern Road <span class="pill active">Active</span></div>
+    <div class="meta">Given by: Solara, Master of Trade. Chosen by Jotham.</div>
+    <p>A main trade road through the forest has been disrupted. Investigate and clear it. Traders and even citizens have gone missing along these routes. Solara is not assisting but is monitoring from a distance; the party can reach out if they need help (how, exactly, was not answered).</p>
+    <div class="log"><b>Status:</b> In progress. A fallen tree blocks the road south. The blockage is guarded by undead wolves. Combat ongoing at end of Session 0.</div>
+  </div>
+  <div class="card">
+    <div class="name">The Northern Wolves <span class="pill rumor">Taken by the Dawn Striders</span></div>
+    <div class="meta">Given by: Tharlik (council member). Not chosen.</div>
+    <p>Trade routes to the north are being hit by wolves attacking caravans. The forest is normally in harmony with its wolves, but these are "acting strange." Given what the party is now fighting on the southern road, these are almost certainly the same undead wolves.</p>
+    <div class="log"><b>Status:</b> Rival party has it. Worth tracking whether they come back.</div>
+  </div>
+
+  <h3>Side threads and loose ends</h3>
+  <ul>
+    <li><span class="pill">Open</span> Choose a party name (Discord vote before Session 1).</li>
+    <li><span class="pill">Open</span> Find out how to actually contact Solara in the field.</li>
+    <li><span class="pill">Open</span> Learn the head druid's name (it was in the decree the party received; nobody asked).</li>
+    <li><span class="pill">Open</span> Restock healing potions and supplies at the first opportunity (the Boughs has workshops and enchanters).</li>
+    <li><span class="pill">Open</span> Ask what the reward is. Jotham asked; Solara did not answer.</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="npcs">NPCs and factions</h2>
+
+  <h3>The Council of Thornhaven</h3>
+  <p>Each council member has a different role in protecting the city.</p>
+  <div class="grid">
+    <div class="card npc">
+      <div class="name">The Head Druid</div>
+      <div class="meta">Name unknown. Green hair, older, wrinkled. Elder of the council.</div>
+      <p>Arrived in a rush of leaves and wind; everyone in the hall deferred to her. Protecting the forest is her first duty. Skeptical of outsiders, invited the party only because Solara pushed for it. Greeted Soren personally ("I see you, and welcome"), which may mean she recognizes a fellow druid or knows something about him. Not amused by Jotham's sarcasm but sized him up as the more capable leader.</p>
+    </div>
+    <div class="card npc">
+      <div class="name">Solara</div>
+      <div class="meta">Master of Trade. Half-elf. Quest giver for the road task.</div>
+      <p>Brisk, walks fast, briefs on the move. Slightly taller than Erlathon. Refused to give tips: "It's your job to figure it out." Says she will monitor the party and can be reached for help, and will brief them further on the bigger problem if they prove capable.</p>
+    </div>
+    <div class="card npc">
+      <div class="name">Tharlik</div>
+      <div class="meta">Council member. Briefs the wolf task.</div>
+      <p>Only named, not met. The Dawn Striders went to him. A guard may have also given his name (heard as "Darlake Einbach") when Jotham asked who was in charge; transcription is unclear.</p>
+    </div>
+  </div>
+
+  <h3>The Wardens</h3>
+  <div class="card npc">
+    <div class="name">Wardens of Thornhaven</div>
+    <div class="meta">City guard and forest protectors. Uniformed.</div>
+    <p>One met the party at the dock and escorted them to the city, warning them about the Rootway. Others lined the grand hall. They are the ones going missing, and they are stretched thin investigating "other occurrences."</p>
+  </div>
+
+  <h3>Rival party: the Dawn Striders</h3>
+  <div class="card npc">
+    <div class="name">The Dawn Striders</div>
+    <div class="meta">Rival adventuring party. "Named because we stride into the dawn after victorious battle."</div>
+    <ul>
+      <li><b>The Bard (leader):</b> long hair, arrogant, condescending. Called Jotham "dense," mocked his scars ("probably got those from a little raccoon"), and called the road task the easy one. Fell face first into the magical pool after Durian's Mage Hand tied his shoelaces. Durian whispered "it's magical water." Grudge established.</li>
+      <li><b>The Tiefling:</b> woman with horns, radiates strong magical energy (Durian's Arcana). The table's consensus was that she is very attractive.</li>
+      <li><b>The Elf:</b> silent, straight faced, stayed in the back.</li>
+      <li>At least one more member (two laughed at the bard's joke).</li>
+    </ul>
+    <div class="log"><b>Status:</b> Took the northern wolves task. Whether they survive it is an open question.</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="locations">Locations and lore</h2>
+
+  <div class="card place">
+    <div class="name">The Emerald Canopy</div>
+    <p>The forest region around Thornhaven. Redwood-scale trees but greener and lusher. Smells of pine and maple with a sweetness in the air, not damp. Light reaches the forest floor where a normal canopy would block it. Described as "almost ethereal." Nothing like the forests on the party's home continent.</p>
+  </div>
+  <div class="card place">
+    <div class="name">Star Bark trees</div>
+    <p>The famed trees Thornhaven is built into. Inherently magical; their energy is what makes the Emerald Canopy what it is. They grow only here. Every attempt to plant Star Bark seeds elsewhere in the world has failed. Soren could feel their power by touching one.</p>
+  </div>
+  <div class="card place">
+    <div class="name">Thornhaven</div>
+    <p>City built into and around the Star Bark trees, mixing druidic living bridges with elven stone architecture. Home for eons to the Druids of the Verdant Path. Once at war with the elves of the Verdant Spire to the north; the two made peace and the city is the product of both peoples living in harmony. Three levels:</p>
+    <ul>
+      <li><b>The Rootway</b> (bottom): dark, light barely reaches it. Home to the poorer and "more lively" citizens. Thieves, crooks, and unsavory types. The Warden warned: don't linger alone, watch your pockets. Jotham recognized the vibe from his own past.</li>
+      <li><b>The Boughs</b> (middle): reached by spiraling wooden staircases around the trunks. Workshops, smoke, the clang of armor and weapons being forged, flashes of magic from enchanting shops. Likely the place to buy gear and potions.</li>
+      <li><b>The Canopy</b> (top): the same magical energy felt on entering the forest. Site of the grand hall.</li>
+    </ul>
+  </div>
+  <div class="card place">
+    <div class="name">The Grand Hall and the Pool</div>
+    <p>A majestic pool of magical water fills the hall. Walking on it feels like solid glass or a mirror, though water visibly moves beneath. It can apparently let someone through when it wants to (the Dawn Striders' bard went in with a splash), and water beads off like Gore-Tex and rejoins the surface without a ripple. An overhanging platform to the north is where the council addresses visitors. Bright light pours in from above, enough to hide a Mage Hand in.</p>
+  </div>
+  <div class="card place">
+    <div class="name">The Southern Road</div>
+    <p>Main trade road out of Thornhaven. At a clearing the main road continues south, a road splits east over a bridge, and a path goes west. A fallen tree blocks the southern road. The tree is too large to vault. Durian set part of it on fire. Undead wolves lair in the brush around it, and the rot smell is strongest to the south.</p>
+  </div>
+  <div class="card place">
+    <div class="name">The Verdant Spire</div>
+    <p>Elven realm to the north of Thornhaven. Formerly at war with the druids, now at peace. Not yet visited.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="enemies">Enemies encountered</h2>
+  <div class="card enemy">
+    <div class="name">Undead wolves</div>
+    <div class="meta">First seen: Session 0, southern road. At least 4 regular plus 1 huge one.</div>
+    <p>Wolves with flesh sloughing off; one's jaw hung partly detached but still bit. Smell of rot carries far ahead of them. Bite did 18 damage to Erlathon in one hit and forced a Constitution save (effect unknown; he passed). They grapple and drag targets into the brush by the cloak (Dexterity save, DC around 12). Passive perception high enough to spot a stealth 20. Strength good enough that both passed Entangle. Rolled very high on initiative.</p>
+    <p><b>Weakness:</b> radiant damage. Jotham's Divine Smite disintegrated one outright. Elementalism fire on the tree drew them out but did not obviously hurt them.</p>
+    <div class="log"><b>Status:</b> 1 killed by Jotham. 4 plus the big one still up at end of Session 0.</div>
+  </div>
+  <div class="card enemy">
+    <div class="name">The huge wolf</div>
+    <div class="meta">Session 0. "The biggest wolf you've ever seen in your life."</div>
+    <p>Appeared beside Aurelian after he disengaged. Included in Erlathon's Entangle and saved. Presumably the pack leader, and presumably undead too. No attacks seen yet.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="state">Current state and open threads</h2>
+  <div class="callout warn">
+    <div class="label">Where we left off</div>
+    <p><b>Mid-combat on the southern road, end of round 1.</b> Erlathon just took the last turn. Next up is the top of round 2, meaning the wolves act before anyone else.</p>
+    <table>
+      <tr><th>Character</th><th>Position and condition</th><th>Resources spent</th></tr>
+      <tr><td>Jotham</td><td>At the edge of the brush where he was dragged. Standing over the dead wolf. Shield of Faith active (+2 AC, concentration).</td><td>1 spell slot on Divine Smite, 1 on Shield of Faith. Two slots left (per Jotham).</td></tr>
+      <tr><td>Soren</td><td>Brown bear form, back to back with Erlathon, free of the grapple.</td><td>1 Wild Shape use.</td></tr>
+      <tr><td>Aurelian</td><td>Disengaged toward the fallen tree, boxed in by it and the fire. The huge wolf is adjacent. Bow dropped on the ground, shortsword in hand.</td><td>None.</td></tr>
+      <tr><td>Erlathon</td><td>Badly injured, one hit from dropping. Moved 35 ft away from his wolf. Difficult terrain (Entangle) around the big wolf and one other.</td><td>1st-level slot on Entangle. Concentrating on Entangle.</td></tr>
+      <tr><td>Durian</td><td>Where he stood when he lit the tree. Unhurt.</td><td>1st-level slot on Command.</td></tr>
+    </table>
+    <p><b>Enemies:</b> 4 undead wolves plus the huge wolf. One wolf is adjacent to Aurelian, one near Erlathon's old position, one near Soren, one near Durian (the one that held Jotham is dead).</p>
+    <p><b>Plans voiced:</b> Durian to cast Tasha's Hideous Laughter. Party to funnel wolves toward Jotham for smites and protect him. Solara can be called for help if needed.</p>
+  </div>
+
+  <h4>Open questions</h4>
+  <ul>
+    <li>What is the Constitution save on the wolf bite for? Disease, necrotic rider, or something worse?</li>
+    <li>Why are the wolves undead, and is it connected to the missing wardens and traders?</li>
+    <li>Why did the head druid single out Soren?</li>
+    <li>What are the "other occurrences" the wardens are investigating?</li>
+    <li>What did the party's decree actually say? Worth re-reading in Foundry; it has the head druid's name.</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="lessons">Lessons and tactics</h2>
+  <p>Things the DM said out loud or that the fight made obvious.</p>
+  <ul>
+    <li><b>Radiant kills the undead.</b> Jotham's smites are the party's win condition. Anyone with radiant or similar options should look for them as the season goes on. Set Jotham up; do not scatter.</li>
+    <li><b>Fight as a team.</b> The DM's stated design goal. "There's no more 'I'm getting this one, I'm getting this one.' Use your strengths and protect your weaknesses."</li>
+    <li><b>Do not split off.</b> Aurelian's solo scouting got him boxed in next to the biggest threat. Stealth 20 was not enough against these wolves.</li>
+    <li><b>Prepare before travel.</b> The DM asked what the party wanted to do before boarding; nobody restocked and now there are no potions. Buy supplies before every expedition.</li>
+    <li><b>Share kits.</b> Nobody knew who had what. Compare spell lists before Session 1.</li>
+    <li><b>Rules reminders from the DM (2024 rules, played stricter this season):</b>
+      <ul>
+        <li>Ranged attack with an enemy within 5 ft is at disadvantage.</li>
+        <li>Hiding in combat is an action, so you cannot Disengage (via Cunning Action) and Hide in the same turn without a second bonus action.</li>
+        <li>Moving away without Disengage provokes an opportunity attack. Disengage is an action (Cunning Action makes it a bonus action for rogues).</li>
+        <li>If you cast a leveled spell as your action, your bonus action spell that turn must be a cantrip.</li>
+        <li>Entangle: save is only on cast. Failures are restrained; successes still leave the 20 ft square as difficult terrain. Half in the cube counts.</li>
+        <li>Shield of Faith must target yourself explicitly in Foundry or it lands on the enemy.</li>
+      </ul>
+    </li>
+    <li><b>Slots are scarce.</b> Jotham has two smites left and Erlathon needs healing from somewhere. Spend big resources on the huge wolf, not the strays.</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="sessions">Session minutes</h2>
+  <p class="uncertain">Newest session at the bottom. Click a session to expand or collapse it.</p>
+
+  <details class="session" id="session-0" open>
+    <summary>Session 0 <span class="date">Thursday, September 10, 2026. Ended 10:45 pm mid-combat.</span></summary>
+    <div class="body">
+
+      <h4>Summary</h4>
+      <p>Arrival in the Emerald Canopy, tour of Thornhaven, audience with the council, choice of proving task, and the opening round of a fight with undead wolves on the southern road. Session ran long on Foundry setup issues after the VTT update; the DM called it a "getting back into the swing of things" session.</p>
+
+      <h4>Minutes</h4>
+      <ol>
+        <li><b>Landfall.</b> The party sights the impossibly green forest from a couple of miles out at sea. A Warden meets them at the shore, confirms they are the ones who answered the call, and hurries them toward Thornhaven.</li>
+        <li><b>The forest.</b> Long march through the Emerald Canopy. Pine and maple smell with a sweetness, light where there should be shade. Warden explains Thornhaven's history: Druids of the Verdant Path, old war with the elves of the Verdant Spire, now harmony.</li>
+        <li><b>The Rootway.</b> Dark lower level. Aurelian's passive perception and Jotham's criminal instincts both read it as thief territory. Warden: don't linger alone, watch your pockets.</li>
+        <li><b>The Boughs.</b> Spiral staircases up the trunks to the workshop level. Smoke, forging, enchantment magic.</li>
+        <li><b>The Canopy.</b> Soren rolls Nature and identifies the Star Bark trees: magical, unique to this place, cannot be grown anywhere else.</li>
+        <li><b>Foundry pause.</b> DM restarts to fix the token action HUD mod, which is incompatible with the new Foundry version. Not resolved; players use character sheets directly.</li>
+        <li><b>The grand hall.</b> A pool of magical water. Another party stands on its surface. Aurelian steps out first and finds it solid as glass. Jotham asks the rival group what the point of the pool is; their long-haired bard calls him dense and asks if he is a "drow bull," then walks off. Erlathon confirms the surface continues. Durian's Arcana (15) reads overwhelming magic in the hall and strong energy from the rival tiefling. Guards in warden garb line the perimeter.</li>
+        <li><b>The council.</b> Jotham asks a guard who is in charge and is pointed to the platform. The green-haired head druid arrives in a swirl of leaves, greets Soren by name ("I see you, and welcome"), and lays out the situation: wardens missing, earlier adventurers missing, outsiders invited at Solara's urging. She asks where the party hails from; Aurelian answers "the other side of the ocean." Aurelian says they hunger for battle and points to their scars; the rival bard jokes about raccoons.</li>
+        <li><b>Leaders and names.</b> The bard declares himself leader of the Dawn Striders. Jotham steps up as leader of the party. Asked for a name, the party has none. Out-of-character brainstorm produces: the Unbound, the Darkness of Lathander, Durick's Doom, Pool Walkers, Fandalin's Heroes, the Fandalin Five, Woodland Wanderers, Deathmark, Greyborne, the Tribe of Fandalin, and the Trojan Horses. DM defers the decision to a Discord vote. In character, Jotham tells the druid "the Pool Walkers."</li>
+        <li><b>The shoelaces.</b> As both leaders are called forward, Durian uses Mage Hand (Arcana check, hidden in the bright light) to tie the bard's shoelaces. The bard face-plants through the water and comes up soaked, baffled at how he got wet. Durian whispers "it's magical water." The druid rolls her eyes and tells Jotham he is probably the more capable of the two.</li>
+        <li><b>The two tasks.</b> Task one: clear a disrupted main road (Solara briefs). Task two: wolves attacking caravans to the north, behaving strangely (Tharlik briefs). Jotham chooses the road, checking with the group first; Soren backs him and adds that he would rather not hurt animals. The bard sneers that they took the easy one and leaves, after retying his shoe.</li>
+        <li><b>Solara.</b> Head druid vanishes. Solara, Master of Trade, jumps down and briefs at speed while walking. Wagon ride out. Traders and citizens missing on the routes, wardens stretched thin, she will watch but not help, and she will say more once they prove themselves. Jotham asks how to contact her (no clear answer) and what the reward is (no answer). Aurelian asks for advice and gets "It's your job to figure it out," then winks at her.</li>
+        <li><b>The clearing.</b> Main road south with a fallen tree across it, road east over a bridge, path west. Aurelian stealths ahead (20) behind trees, sees nothing. Erlathon's Perception picks up a foul smell to the south and he signals with ranger hand gestures. Jotham listens, hears nothing useful. Aurelian argues for going east across the bridge to approach the tree from behind; Jotham is skeptical. Durian moves closer and casts Elementalism to put fire on the fallen tree.</li>
+        <li><b>Ambush.</b> The stench resolves into an undead wolf bursting from the brush. Initiative. Aurelian is allowed to count as hidden from his earlier Stealth, but the wolf's passive perception beats it. The wolves roll very high.</li>
+        <li><b>Round 1, wolves.</b> Wolf bites Erlathon: Constitution save (passed), 18 damage, "badly injured." A second wolf grabs Soren from behind and drags him into the woods (failed Dexterity save). A third does the same to Jotham (failed Dexterity save, DC 12). A fourth lunges at Aurelian and misses.</li>
+        <li><b>Round 1, Durian.</b> Casts Command ("drop") on the wolf holding Jotham's cloak. It saves and just stares at him.</li>
+        <li><b>Round 1, Aurelian.</b> Drops bow (adjacent enemy would mean disadvantage), hits the wolf with shortsword for 6, Cunning Action Disengage, moves toward the tree. Cannot hide as well, cannot vault the tree this turn. Perception check: the stench gets stronger and the biggest wolf he has ever seen is right next to him.</li>
+        <li><b>Round 1, Soren.</b> Wild shapes into a brown bear (Foundry needed manual override). Strength check with advantage, rolls a 20, escapes the grapple. Multiattack on the wolf: one hit, one miss. Wolf still up. Moves back to back with Erlathon.</li>
+        <li><b>Round 1, Jotham.</b> Longsword hit on the wolf holding him, Divine Smite for 2d8 radiant, 18 total. Kills it: the sword cuts, then the radiant energy disintegrates the wolf. Narrated as kicking it off his cloak and driving the glowing blade down its throat. Bonus action Shield of Faith on himself (+2 AC).</li>
+        <li><b>Round 1, Erlathon.</b> Rules discussion on move, action, and bonus action. Casts Entangle as an action on the big wolf and the wolf beside him. Both pass the Strength save; area becomes difficult terrain. Moves 35 ft away toward the dead wolf. Opportunity attack from his wolf misses (narrated as the vines slowing it). Party realizes nobody has potions.</li>
+        <li><b>Session end.</b> 10:45 pm. DM: the party is "in a pickle," radiant damage is the answer, work as a team, Solara is available if needed. Next date TBD, after the wedding on September 25.</li>
+      </ol>
+
+      <h4>Roleplay moments worth remembering</h4>
+      <ul>
+        <li>Jotham's first interaction with any NPC turned into a banter fight, which is exactly what he said he was working on in the off-season ("I'm working on my temperament").</li>
+        <li>Jotham is now the designated leader, which he did not seek out but stepped into when nobody else did.</li>
+        <li>The DM had each player describe what their character worked on during the off-season (details not captured in the recording).</li>
+      </ul>
+
+      <h4>Rolls and numbers of note</h4>
+      <table>
+        <tr><th>Who</th><th>Check</th><th>Result</th></tr>
+        <tr><td>Soren</td><td>Nature (Star Bark trees)</td><td>High enough for full lore</td></tr>
+        <tr><td>Durian</td><td>Arcana (hall and rival party)</td><td>15</td></tr>
+        <tr><td>Aurelian</td><td>Stealth (scouting)</td><td>20, still spotted</td></tr>
+        <tr><td>Erlathon</td><td>Constitution save (bite)</td><td>Passed, barely</td></tr>
+        <tr><td>Undead wolf</td><td>Bite on Erlathon</td><td>18 damage</td></tr>
+        <tr><td>Soren and Jotham</td><td>Dexterity save vs grab</td><td>Both failed (DC about 12)</td></tr>
+        <tr><td>Aurelian</td><td>Shortsword</td><td>Hit, 6 damage</td></tr>
+        <tr><td>Soren (bear)</td><td>Strength check to escape</td><td>20</td></tr>
+        <tr><td>Jotham</td><td>Longsword plus Divine Smite</td><td>18 damage, kill</td></tr>
+        <tr><td>Erlathon</td><td>Entangle</td><td>Both wolves saved</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details class="session" id="session-1">
+    <summary>Session 1 <span class="date">Date TBD</span></summary>
+    <div class="body">
+      <p class="placeholder">Not yet played. Resumes at the top of round 2 on the southern road.</p>
+      <h4>Summary</h4>
+      <p class="placeholder">...</p>
+      <h4>Minutes</h4>
+      <ol><li class="placeholder">...</li></ol>
+      <h4>Roleplay moments worth remembering</h4>
+      <ul><li class="placeholder">...</li></ul>
+      <h4>Rolls and numbers of note</h4>
+      <table><tr><th>Who</th><th>Check</th><th>Result</th></tr><tr><td class="placeholder">...</td><td></td><td></td></tr></table>
+    </div>
+  </details>
+
+  <details class="session" id="session-2">
+    <summary>Session 2 <span class="date">Date TBD</span></summary>
+    <div class="body">
+      <p class="placeholder">Not yet played.</p>
+    </div>
+  </details>
+
+  <!-- ============================================================ -->
+  <h2 id="table">Table notes and logistics</h2>
+  <ul>
+    <li><b>VTT:</b> Foundry. The recent update broke the token action HUD / quick access mod (requires max system version 5.99). DM may revert to the old version. Players used character sheets directly for now. Combat tracker buttons moved: sword icon is attack, splatter icon is damage, bottom right of the chat card.</li>
+    <li><b>Soren's wild shape:</b> Foundry sheet caps forms at CR 1/4 instead of CR 1 for a Moon Druid. DM needs to fix it and have brown bear stats ready. Tell the DM which forms you want before the session.</li>
+    <li><b>Language chat:</b> Everyone speaks Elvish. Foundry language channel defaulted to Common; check before sending in-character messages.</li>
+    <li><b>Party name vote:</b> Discord, before Session 1.</li>
+    <li><b>Next session:</b> after the wedding on September 25. Date to be set.</li>
+    <li><b>Off-season prompt:</b> DM asked each player what their character worked on between seasons. Be ready for this kind of question.</li>
+  </ul>
+
+  <!-- ============================================================ -->
+  <h2 id="howto">How to add a session</h2>
+  <ol>
+    <li>Paste the new transcript into this chat and ask for the journal to be updated. Everything below is what gets touched.</li>
+    <li><b>Session minutes:</b> fill the next <code>details.session</code> block (copy the Session 0 structure: Summary, Minutes, Roleplay moments, Rolls). Add a new placeholder block below it and a matching link in the sidebar.</li>
+    <li><b>Story so far:</b> add one paragraph under a new "After Session N" heading.</li>
+    <li><b>The party:</b> append a "Session N:" line to each character's log. Update level, HP, and new abilities in the meta line.</li>
+    <li><b>Quests:</b> update status pills (Active, Done, Failed) and the status log line. Add new quests as new cards.</li>
+    <li><b>NPCs, Locations, Enemies:</b> add cards for anything new; append to existing ones.</li>
+    <li><b>Current state:</b> rewrite entirely. It should always describe only the latest end-of-session position.</li>
+    <li><b>Lessons and tactics:</b> add anything the DM said or the fight taught.</li>
+    <li><b>Campaign at a glance:</b> bump the session count and any changed facts.</li>
+  </ol>
+</main>
+</div>
+
+<button class="topbtn" id="topbtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Top</button>
+
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  var topbtn = document.getElementById('topbtn');
+
+  function setActive() {
+    var y = window.scrollY + 120;
+    var current = targets[0];
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i].offsetTop <= y) current = targets[i];
+    }
+    links.forEach(function (a) {
+      a.classList.toggle('active', current && a.getAttribute('href') === '#' + current.id);
+    });
+    topbtn.classList.toggle('show', window.scrollY > 400);
+  }
+  window.addEventListener('scroll', setActive, { passive: true });
+  window.addEventListener('load', setActive);
+
+  // Open a collapsed session when its TOC link or a hash points at it
+  function openTarget(hash) {
+    if (!hash) return;
+    var el = document.querySelector(hash);
+    if (el && el.tagName === 'DETAILS') el.open = true;
+  }
+  links.forEach(function (a) {
+    a.addEventListener('click', function () {
+      openTarget(a.getAttribute('href'));
+      document.querySelector('nav.toc').classList.remove('open');
+    });
+  });
+  openTarget(location.hash);
+})();
+</script>
+<!-- Notes feature. Keep these three lines when replacing the journal above. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+<script src="notes.js"
+  data-supabase-url="https://zamizuofpfleamcwplmi.supabase.co"
+  data-supabase-key="sb_publishable_rmLes8JaTuUs0eVVoja5aA_EAquOSVh"></script>
+</body>
+</html>
