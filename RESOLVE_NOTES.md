@@ -21,6 +21,8 @@ The short version: read the open notes, ask Julian what to do with each one usin
 
 `resolved_at` is stamped automatically by a trigger. `resolution` is a short line (up to 300 characters) saying what happened, shown in the history. Always fill it in.
 
+Authors can edit their own notes from the browser they posted from until the note is resolved, so re-read a note's current `body` right before folding it in rather than trusting an earlier copy. `edited_at` tells you if it changed.
+
 ## Steps
 
 ### 1. Read the repo

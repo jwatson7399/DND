@@ -19,6 +19,7 @@ create table if not exists public.journal_notes (
   kept        boolean not null default false,
   deferred    boolean not null default false,
   resolution  text,
+  edited_at   timestamptz,
   session     integer,
   constraint journal_notes_author_allowed
     check (author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Therion', 'DM')),
@@ -148,6 +149,77 @@ create policy "journal_notes anon insert"
 -- authenticated cannot update or delete at the privilege level.
 revoke update, delete, truncate on public.journal_notes from anon, authenticated;
 grant select, insert on public.journal_notes to anon;
+
+-- ---------------------------------------------------------------------------
+-- Owner edits without logins. When the page posts a note it generates a
+-- random token, keeps it in that browser's localStorage, and sends it along.
+-- Only the sha256 of the token is stored, in a table with no API access.
+-- edit_note checks the token and lets the body change while the note is
+-- not yet resolved (kept and deferred notes are still editable). Both
+-- functions run as security definer on purpose; anon can execute them and
+-- nothing else touches journal_note_secrets.
+-- ---------------------------------------------------------------------------
+create table if not exists public.journal_note_secrets (
+  note_id    uuid primary key references public.journal_notes(id) on delete cascade,
+  token_hash text not null
+);
+alter table public.journal_note_secrets enable row level security;
+revoke all on public.journal_note_secrets from anon, authenticated;
+
+create or replace function public.add_note(
+  p_section text, p_author text, p_body text, p_session integer, p_token text
+)
+returns public.journal_notes
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  n public.journal_notes;
+begin
+  if p_token is null or char_length(p_token) < 32 then
+    raise exception 'edit token missing' using errcode = 'check_violation';
+  end if;
+  insert into public.journal_notes (section, author, body, session)
+  values (p_section, p_author, p_body, p_session)
+  returning * into n;
+  insert into public.journal_note_secrets (note_id, token_hash)
+  values (n.id, encode(digest(p_token, 'sha256'), 'hex'));
+  return n;
+end;
+$$;
+
+create or replace function public.edit_note(p_id uuid, p_token text, p_body text)
+returns public.journal_notes
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  n public.journal_notes;
+  h text;
+begin
+  select token_hash into h from public.journal_note_secrets where note_id = p_id;
+  if h is null or p_token is null or h <> encode(digest(p_token, 'sha256'), 'hex') then
+    raise exception 'not your note: only the browser that posted a note can edit it'
+      using errcode = 'insufficient_privilege';
+  end if;
+  update public.journal_notes
+  set body = p_body, edited_at = now()
+  where id = p_id and resolved = false
+  returning * into n;
+  if n.id is null then
+    raise exception 'note is resolved and can no longer be edited'
+      using errcode = 'check_violation';
+  end if;
+  return n;
+end;
+$$;
+
+revoke execute on function public.add_note(text, text, text, integer, text) from public, authenticated;
+revoke execute on function public.edit_note(uuid, text, text) from public, authenticated;
+grant execute on function public.add_note(text, text, text, integer, text) to anon;
+grant execute on function public.edit_note(uuid, text, text) to anon;
 
 -- ---------------------------------------------------------------------------
 -- Realtime: lets open pages receive inserts and resolved changes instantly.

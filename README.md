@@ -28,6 +28,7 @@ Each notes area shows:
 - Existing notes, oldest first, with author, relative time, body, and a status tag. Open notes show a red "open" tag. Kept notes show a blue "kept" tag and stay visible. Notes deferred to the next rebuild show a gold "next rebuild" tag and stay visible until then. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
 - An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Therion, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
+- **Editing your own note.** Until a note is resolved, the browser that posted it shows an "Edit" link next to it (kept and deferred notes included). Editing is inline: change the text, Save or Cancel. Edited notes show a small "edited" marker with the time on hover. There are no accounts, so "your own" means this browser: when you post, the page generates a random token, keeps it in localStorage, and sends it to the server, which stores only a hash. Clearing site data, or switching devices, loses the ability to edit older notes. Ask the DM to fix the text in that case.
 
 Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general`). Notes on a card use `<section>--<slug of the card name>`, for example `party--jotham` or `npcs--solara`. Notes on a kill recap use `enemies--kills-<character>-<kill number>`, for example `enemies--kills-jotham-1`; a character with no kills yet has one control at `enemies--kills-<character>`. Kill numbers follow the order of the list, so always append new kills at the bottom. If a card is renamed or removed when the journal is regenerated, its notes are not lost: they show up in the parent section's list instead.
 
@@ -107,6 +108,7 @@ Table `journal_notes`:
 | kept | boolean | not null, default false. Set by the maintainer only. Stays visible, does not count as a to-do. |
 | deferred | boolean | not null, default false. Set by the maintainer only. Stays visible, does not count as a to-do, folded in as canon at the next rebuild. Cannot be true together with kept. |
 | resolution | text | nullable, 1 to 300 characters. What was done with the note. Shown under it in the history. |
+| edited_at | timestamptz | nullable. Set by `edit_note` when the author changes the body. |
 | session | integer | nullable. Set automatically for notes posted inside a session block. |
 
 Row level security is on. Policies for the `anon` role:
@@ -118,6 +120,8 @@ Row level security is on. Policies for the `anon` role:
 Rate limit: a `before insert` trigger (`journal_notes_rate_limit`) rejects the row when the same author already has 20 or more notes in the last 10 minutes. The page turns that error into a one-line "slow down" message. The function runs as `security definer` with `execute` revoked from `anon` and `authenticated`, so it cannot be called over the API.
 
 A second trigger (`journal_notes_track_resolved`) stamps `resolved_at` when a note is resolved and clears it if reopened. Both trigger functions have `execute` revoked from `anon` and `authenticated`.
+
+Owner edits: a second table, `journal_note_secrets` (`note_id`, `token_hash`), has RLS on and no grants, so it is unreachable through the API. Two `security definer` functions that `anon` may execute do the work: `add_note(section, author, body, session, token)` inserts the note and the sha256 of the token together, and `edit_note(id, token, body)` updates the body and `edited_at` when the hash matches and the note is not resolved. The page posts through `add_note`; a plain insert through the table still works (the curl examples above) but such a note has no token and cannot be edited. The Supabase security advisor flags these two functions as anon-executable security definer functions; that is intentional.
 
 Realtime: the table is added to the `supabase_realtime` publication so open pages get inserts and state changes without a refresh.
 

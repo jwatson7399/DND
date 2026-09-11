@@ -8,6 +8,8 @@
      - every card inside those sections (characters, quests, NPCs, places,
        enemies) gets a compact "Add note" control of its own
      - every numbered kill inside the kill recaps gets one too
+     - a note can be edited from the browser that posted it until it is
+       resolved; the browser keeps a secret token per note in localStorage
      - a General box closes the page
    Card notes use a section id of "<parent>--<slug of card name>". If a card is
    renamed or removed later, its notes fall back to the parent section list. */
@@ -55,6 +57,44 @@
     boxes.forEach(function (box) { if (box.select.value !== value) box.select.value = value; });
   }
 
+  /* Edit tokens: one random secret per note this browser posted. Only the
+     hash lives on the server, so only this browser can edit those notes. */
+  var TOKENS_KEY = 'journal_notes_tokens';
+
+  function readTokens() {
+    try {
+      var raw = localStorage.getItem(TOKENS_KEY);
+      var parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveToken(id, token) {
+    var all = readTokens();
+    all[id] = token;
+    try { localStorage.setItem(TOKENS_KEY, JSON.stringify(all)); } catch (e) { /* private mode */ }
+  }
+
+  function tokenFor(id) {
+    return readTokens()[id] || null;
+  }
+
+  function makeToken() {
+    var bytes = new Uint8Array(32);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (var i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    var hex = '';
+    for (var k = 0; k < bytes.length; k++) hex += ('0' + bytes[k].toString(16)).slice(-2);
+    return hex;
+  }
+
+  function canEdit(note) {
+    return !note.resolved && !!tokenFor(note.id);
+  }
+
   function slugify(text) {
     return String(text || '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -100,6 +140,9 @@
   function friendlyError(err) {
     var msg = (err && (err.message || err.details || err.hint)) || '';
     if (/rate limit|too many notes/i.test(msg)) return 'Slow down: more than 20 notes in 10 minutes from one author.';
+    if (/not your note/i.test(msg)) return 'Only the browser that posted this note can edit it.';
+    if (/no longer be edited/i.test(msg)) return 'This note has been resolved and can no longer be edited.';
+    if (/edit token/i.test(msg)) return 'Could not create an edit token. Try reloading the page.';
     if (/author/i.test(msg) && /check|violat/i.test(msg)) return 'Pick a valid name from the list.';
     if (/body/i.test(msg) && /check|violat/i.test(msg)) return 'Notes must be 1 to 2000 characters.';
     if (/timeout|fetch|network/i.test(msg)) return 'Could not reach the notes server. Check your connection and try again.';
@@ -411,8 +454,25 @@
         openTag.title = 'Waiting for the journal keeper to decide what to do with it.';
         meta.appendChild(openTag);
       }
+      if (note.edited_at) {
+        var edited = el('span', 'note-edited', ' edited');
+        edited.title = 'Edited ' + relativeTime(note.edited_at) + ' (' + new Date(note.edited_at).toLocaleString() + ')';
+        meta.appendChild(edited);
+      }
+      var editing = box.editingId === note.id;
+      if (canEdit(note) && !editing) {
+        var editBtn = el('button', 'note-edit', 'Edit');
+        editBtn.type = 'button';
+        editBtn.title = 'You posted this note from this browser, so you can still change it until it is resolved.';
+        editBtn.addEventListener('click', function () { startEdit(box, note); });
+        meta.appendChild(editBtn);
+      }
       li.appendChild(meta);
-      li.appendChild(el('div', 'note-body', note.body));
+      if (editing) {
+        li.appendChild(buildEditor(box, note));
+      } else {
+        li.appendChild(el('div', 'note-body', note.body));
+      }
       if (note.resolution) li.appendChild(el('div', 'note-resolution', note.resolution));
       box.list.appendChild(li);
     });
@@ -608,6 +668,11 @@
         link.href = loc.href;
         link.addEventListener('click', function () { revealHash(loc.href); });
         meta.appendChild(link);
+        if (note.edited_at) {
+          var ed = el('span', 'note-edited', ' edited');
+          ed.title = 'Edited ' + relativeTime(note.edited_at);
+          meta.appendChild(ed);
+        }
         li.appendChild(meta);
         li.appendChild(el('div', 'note-body', note.body));
         if (note.resolution) li.appendChild(el('div', 'note-resolution', note.resolution));
@@ -631,6 +696,79 @@
     }
   }
 
+  /* ---------- editing your own note ---------- */
+
+  function startEdit(box, note) {
+    box.editingId = note.id;
+    box.editDraft = note.body;
+    box.editError = '';
+    renderBox(box);
+    var ta = box.list.querySelector('.note-editor textarea');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+
+  function stopEdit(box) {
+    box.editingId = null;
+    box.editDraft = '';
+    box.editError = '';
+    renderBox(box);
+  }
+
+  /* Re-rendering (a poll, a realtime event) rebuilds the list, so the draft
+     lives on the box and is written back into the textarea each time. */
+  function buildEditor(box, note) {
+    var wrap = el('div', 'note-editor');
+    var ta = el('textarea');
+    ta.value = box.editDraft;
+    ta.maxLength = 2000;
+    ta.rows = 3;
+    ta.disabled = !!box.editInFlight;
+    ta.addEventListener('input', function () { box.editDraft = ta.value; });
+    var actions = el('div', 'actions');
+    var save = el('button', null, box.editInFlight ? 'Saving...' : 'Save');
+    save.type = 'button';
+    save.disabled = !!box.editInFlight;
+    save.addEventListener('click', function () { saveEdit(box, note); });
+    var cancel = el('button', 'notes-cancel', 'Cancel');
+    cancel.type = 'button';
+    cancel.disabled = !!box.editInFlight;
+    cancel.addEventListener('click', function () { stopEdit(box); });
+    var err = el('div', 'notes-error', box.editError || '');
+    actions.appendChild(save);
+    actions.appendChild(cancel);
+    actions.appendChild(err);
+    wrap.appendChild(ta);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  function saveEdit(box, note) {
+    var body = (box.editDraft || '').trim();
+    if (!body) { box.editError = 'Write something, or cancel.'; renderBox(box); return; }
+    if (body.length > 2000) { box.editError = 'Notes must be 2000 characters or fewer.'; renderBox(box); return; }
+    if (body === note.body) { stopEdit(box); return; }
+    var token = tokenFor(note.id);
+    if (!client || !available || !token) { box.editError = 'Notes unavailable right now.'; renderBox(box); return; }
+
+    box.editInFlight = true;
+    box.editError = '';
+    renderBox(box);
+    withTimeout(client.rpc('edit_note', { p_id: note.id, p_token: token, p_body: body }), REQUEST_TIMEOUT_MS)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var row = Array.isArray(res.data) ? res.data[0] : res.data;
+        if (row && row.id) notesById[row.id] = row;
+        box.editInFlight = false;
+        stopEdit(box);
+        renderAll();
+      })
+      .catch(function (err) {
+        box.editInFlight = false;
+        box.editError = friendlyError(err);
+        renderBox(box);
+      });
+  }
+
   /* ---------- data ---------- */
 
   function submit(box) {
@@ -644,12 +782,16 @@
 
     box.inFlight = true;
     box.button.disabled = true;
-    var payload = { section: box.section.id, author: name, body: body, session: box.section.session };
+    var token = makeToken();
+    var payload = { p_section: box.section.id, p_author: name, p_body: body, p_session: box.section.session, p_token: token };
 
-    withTimeout(client.from(TABLE).insert(payload).select().single(), REQUEST_TIMEOUT_MS)
+    withTimeout(client.rpc('add_note', payload), REQUEST_TIMEOUT_MS)
       .then(function (res) {
         if (res.error) throw res.error;
-        notesById[res.data.id] = res.data;
+        var row = Array.isArray(res.data) ? res.data[0] : res.data;
+        if (!row || !row.id) throw new Error('unexpected response');
+        saveToken(row.id, token);
+        notesById[row.id] = row;
         box.textarea.value = '';
         closeForm(box);
         renderAll();
