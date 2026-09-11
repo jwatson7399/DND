@@ -40,7 +40,9 @@ Every note is in one of four states, set by the maintainer only:
 - **deferred**: shown with a "next rebuild" tag, does not count toward the badge. The decision is made: the fact becomes canon when the next session is added, and the note is resolved then. Until that rebuild it stays as a visible note on the current journal.
 - **resolved**: hidden behind "Resolved history", struck through when expanded, with the resolution line underneath. For notes that were folded into the journal or needed no change.
 
-The table of contents shows a gold count badge next to any section with open notes so the maintainer can see where the pending decisions are.
+The table of contents shows two count badges next to a section: a solid gold one for open notes (pending decisions) and a green outlined one for settled notes (resolved, kept, or waiting for the next rebuild). Hover the green badge for the breakdown. Badges never disappear once a section has notes, so the history stays visible at a glance.
+
+At the very end of the page, after General notes, a **Notes ledger** lists every note the party has added, newest first, grouped by status (open, folding in at the next rebuild, kept, resolved). Each entry shows author, age, the note, its resolution line, and a link that jumps to the exact box it was posted in, opening any collapsed session or kill recap on the way. The resolved group is collapsed by default. Both General notes and the Notes ledger get links at the bottom of the table of contents.
 
 Where the page finds its Supabase project: the last `<script>` tag in `index.html` carries `data-supabase-url` and `data-supabase-key`. The anon key is public by design; it can only do what the RLS policies below allow. The service role key must never be committed.
 
@@ -83,7 +85,7 @@ When regenerating `index.html`, keep two things from the current file so the not
 - At the end of `<body>`, the three lines marked `Notes feature`: the Supabase JS CDN script and the `notes.js` script tag with its two data attributes.
 - Also in `<head>`, the three icon `<link>` tags and the `theme-color` meta, so the tab keeps the d20 icon instead of borrowing another site's favicon from the shared jwatson7399.github.io origin.
 
-Nothing else in the journal needs to know about notes. `notes.js` discovers sections by their ids at runtime (`overview`, `story-so-far`, `party`, `quests`, `npcs`, `locations`, `enemies`, `state`, `lessons`, `table`, plus every `details.session` whose id starts with `session-`) and every `.card` with a `.name` inside those sections, so new session blocks and new cards get an Add note control automatically. Keep the section ids stable or old notes will stop lining up with their sections.
+Nothing else in the journal needs to know about notes. Every notes box gets an anchor id of `notes-<section>` (for example `#notes-party--jotham`), which is what the ledger links to. `notes.js` discovers sections by their ids at runtime (`overview`, `story-so-far`, `party`, `quests`, `npcs`, `locations`, `enemies`, `state`, `lessons`, `table`, plus every `details.session` whose id starts with `session-`) and every `.card` with a `.name` inside those sections, so new session blocks and new cards get an Add note control automatically. Keep the section ids stable or old notes will stop lining up with their sections.
 
 Quick check after pushing: open the live URL, confirm the badges and boxes appear, and post a test note as DM.
 

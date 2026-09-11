@@ -174,7 +174,8 @@ details.kill .nokill + .notes-box.compact { margin-top: 10px; }
 /* General box at the very end of the journal */
 .notes-general h2 { margin-top: 48px; }
 
-/* Unresolved count badge in the table of contents */
+/* Count badges in the table of contents: gold for open notes, green outline
+   for settled ones (resolved, kept, or waiting for the next rebuild) */
 .notes-badge {
   display: inline-block;
   min-width: 18px;
@@ -189,6 +190,49 @@ details.kill .nokill + .notes-box.compact { margin-top: 10px; }
   text-align: center;
   vertical-align: 1px;
 }
+.notes-badge.settled {
+  background: transparent;
+  color: var(--green, #6f9a5c);
+  border: 1px solid var(--green, #6f9a5c);
+  line-height: 15px;
+  font-weight: normal;
+  margin-left: 4px;
+}
+
+/* Notes ledger at the end of the journal */
+.notes-ledger h2 { margin-top: 48px; }
+.ledger-summary { font-family: var(--font-sans, sans-serif); font-size: 13px; color: var(--ink-dim, #b3a58b); }
+details.ledger-group {
+  background: var(--panel, #1d1813);
+  border: 1px solid var(--line, #3a3128);
+  border-radius: var(--radius, 10px);
+  margin: 10px 0;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 13px;
+}
+details.ledger-group > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 16px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: var(--ink, #e8dcc4);
+}
+details.ledger-group > summary::-webkit-details-marker { display: none; }
+details.ledger-group > summary::before { content: "\25B8"; font-size: 12px; color: var(--gold-dim, #8f7439); }
+details.ledger-group[open] > summary::before { content: "\25BE"; }
+details.ledger-group > summary .note-tag { margin-left: 0; }
+details.ledger-group > summary .ledger-title { font-family: var(--font-serif, serif); font-size: 16px; }
+details.ledger-group > summary .ledger-blurb { color: var(--ink-dim, #b3a58b); font-style: italic; }
+.ledger-list { list-style: none; margin: 0; padding: 0 16px 6px; border-top: 1px solid var(--line, #3a3128); }
+.ledger-list li { padding: 10px 0; border-top: 1px solid var(--line, #3a3128); }
+.ledger-list li:first-child { border-top: none; }
+.ledger-list li.resolved { opacity: 0.7; }
+.ledger-list li.resolved .note-body { text-decoration: line-through; }
+.ledger-link { color: var(--gold, #c9a35a); }
+.ledger-stamp { color: var(--green, #6f9a5c); font-size: 12px; margin-top: 2px; }
 
 @media (max-width: 860px) {
   .notes-box { padding: 12px 12px 10px; }

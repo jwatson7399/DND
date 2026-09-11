@@ -1,3 +1,4 @@
 # Local handoff notes from other sessions, never published
 Claude outputs/
 .playwright-mcp/
+*.bundle
