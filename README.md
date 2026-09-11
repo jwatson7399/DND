@@ -12,6 +12,8 @@ A static campaign journal for the Thornhaven season, hosted on GitHub Pages, wit
 | `notes.js` | The notes feature. Finds sections by id at runtime and injects a notes box into each. |
 | `notes.css` | Styling for the notes boxes and the table of contents badges. Uses the journal's CSS variables. |
 | `supabase/schema.sql` | The exact table, constraints, trigger, and RLS policies. Recreates the backend from scratch. |
+| `RESOLVE_NOTES.md` | The standard procedure for turning notes into journal updates, written for an agent or a human. |
+| `CLAUDE.md` | House rules for agents working in this repo, and the pointer to the resolve workflow. |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are, no Jekyll processing. |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The tab and home screen icon: a gold d20 on the journal's dark parchment. Linked from the head of `index.html`. |
 
@@ -23,7 +25,7 @@ Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs
 
 Each notes area shows:
 
-- Existing notes, oldest first, with author, relative time, and body. Resolved notes are hidden behind a "show resolved (n)" toggle and render dimmed and struck through when shown.
+- Existing notes, oldest first, with author, relative time, and body. Notes marked kept carry a blue "kept" tag and stay visible. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
 - An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Durian, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
 
@@ -31,22 +33,31 @@ Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general
 
 Loading: one query fetches every note on page load and groups them by section in the browser. Open pages subscribe to Supabase realtime for instant updates from other players and also poll every 60 seconds (and whenever the tab regains focus), so a missed realtime event is picked up within a minute. If Supabase is unreachable the journal still renders fully and each box says "Notes unavailable".
 
-The table of contents shows a gold count badge next to any section with unresolved notes so the maintainer can see where the corrections are.
+Every note is in one of three states, set by the maintainer only:
+
+- **open**: shown in the box, counts toward the badge in the table of contents. A pending decision.
+- **kept**: shown with a "kept" tag, does not count toward the badge. For jokes, in-character objections, and context that should stay visible as is.
+- **resolved**: hidden behind "Resolved history", struck through when expanded, with the resolution line underneath. For notes that were folded into the journal or needed no change.
+
+The table of contents shows a gold count badge next to any section with open notes so the maintainer can see where the pending decisions are.
 
 Where the page finds its Supabase project: the last `<script>` tag in `index.html` carries `data-supabase-url` and `data-supabase-key`. The anon key is public by design; it can only do what the RLS policies below allow. The service role key must never be committed.
 
 ## Updating the journal after a session
 
-The maintainer (Julian, working with Claude in the DnD project) regenerates the journal from the audio transcript plus the party's notes.
+The maintainer (Julian, working with Claude in the DnD project) regenerates the journal from the audio transcript plus the party's notes. The step-by-step procedure for the notes half of that, including the multiple-choice question format an agent should use, is in `RESOLVE_NOTES.md`. Asking Claude (or any agent with this repo and Supabase access) to "resolve notes" should trigger it; `CLAUDE.md` in this repo points there.
 
-1. **Read the unresolved notes.** In the Supabase dashboard (Table Editor, `journal_notes`, filter `resolved = false`) or through the Supabase connector:
+Outline:
+
+1. **Read the open notes.** Open means `resolved = false` and `kept = false`. In the Supabase dashboard (Table Editor, `journal_notes`) or through the Supabase connector:
    ```sql
-   select section, session, author, body, created_at
+   select id, section, session, author, body, created_at
    from journal_notes
-   where resolved = false
+   where resolved = false and kept = false
    order by section, created_at;
    ```
-2. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), update characters, quests, NPCs, locations, enemies, and rewrite Current state. What gets touched each time:
+2. **Decide each note with Julian.** Fold it in, keep it visible, resolve without changes, or skip.
+3. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), and touch whatever the session changed:
    - Session minutes: fill the next `details.session` block (Summary, Minutes, Roleplay moments, Rolls), add a new placeholder block below it, and add a matching sidebar link.
    - Story so far: one new paragraph under an "After Session N" heading.
    - The party: append a "Session N:" line to each character's log and update level, HP, and abilities.
@@ -56,12 +67,13 @@ The maintainer (Julian, working with Claude in the DnD project) regenerates the 
    - Lessons and tactics: add anything the DM said or the fight taught.
    - Campaign at a glance: bump the session count and any changed facts.
    - Kill count (top of Enemies encountered): bump the table, then add a numbered entry to that character's `details.kill` recap describing the kill. Cinematic and funny is the house style. Characters with no kills keep a "closest call" paragraph instead.
-3. **Mark the folded notes resolved.**
+4. **Mark the notes.** One update per note, with a short `resolution` line:
    ```sql
-   update journal_notes set resolved = true where resolved = false;
+   update journal_notes set resolved = true, resolution = 'Folded into Quests' where id = '...';
+   update journal_notes set kept = true, resolution = 'Kept as party lore' where id = '...';
    ```
-   Or resolve them one at a time in the Table Editor if some should stay open.
-4. **Replace `index.html`, commit, push.** Pages redeploys automatically.
+   `resolved_at` is stamped by a trigger. Never delete notes.
+5. **Replace `index.html`, commit, push.** Pages redeploys automatically.
 
 When regenerating `index.html`, keep two things from the current file so the notes feature keeps working:
 
@@ -86,18 +98,23 @@ Table `journal_notes`:
 | section | text | not null. The section id in the HTML, or `<section>--<card slug>` for a card. Checked against `^[a-z0-9-]{1,64}$`. |
 | author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Durian, DM. |
 | body | text | not null. Check constraint: length 1 to 2000. |
-| resolved | boolean | not null, default false. Set by the maintainer only. |
+| resolved | boolean | not null, default false. Set by the maintainer only. Hidden behind Resolved history on the page. |
+| resolved_at | timestamptz | nullable. Stamped by a trigger when resolved flips to true, cleared if reopened. |
+| kept | boolean | not null, default false. Set by the maintainer only. Stays visible, does not count as a to-do. |
+| resolution | text | nullable, 1 to 300 characters. What was done with the note. Shown under it in the history. |
 | session | integer | nullable. Set automatically for notes posted inside a session block. |
 
 Row level security is on. Policies for the `anon` role:
 
 - `select`: all rows.
-- `insert`: allowed when `author` is in the allowed list, `body` length is 1 to 2000, and `resolved = false`.
+- `insert`: allowed when `author` is in the allowed list, `body` length is 1 to 2000, and the note starts open: `resolved = false`, `kept = false`, `resolution` null.
 - No `update` or `delete` policy. In addition, `update`, `delete`, and `truncate` privileges are revoked from `anon` and `authenticated`, so resolving or removing notes can only happen from the dashboard or with the service role key.
 
 Rate limit: a `before insert` trigger (`journal_notes_rate_limit`) rejects the row when the same author already has 20 or more notes in the last 10 minutes. The page turns that error into a one-line "slow down" message. The function runs as `security definer` with `execute` revoked from `anon` and `authenticated`, so it cannot be called over the API.
 
-Realtime: the table is added to the `supabase_realtime` publication so open pages get inserts and resolved changes without a refresh.
+A second trigger (`journal_notes_track_resolved`) stamps `resolved_at` when a note is resolved and clears it if reopened. Both trigger functions have `execute` revoked from `anon` and `authenticated`.
+
+Realtime: the table is added to the `supabase_realtime` publication so open pages get inserts and state changes without a refresh.
 
 ### Recreating the backend
 

@@ -364,26 +364,37 @@
   function renderBox(box) {
     var all = notesFor(box);
     var resolved = all.filter(function (n) { return n.resolved; });
-    var open = all.length - resolved.length;
+    var open = all.filter(function (n) { return !n.resolved && !n.kept; }).length;
 
     box.count.textContent = open ? '(' + open + ')' : '';
     box.list.textContent = '';
     all.forEach(function (note) {
       if (note.resolved && !box.showResolved) return;
-      var li = el('li', note.resolved ? 'resolved' : '');
+      var li = el('li', note.resolved ? 'resolved' : (note.kept ? 'kept' : ''));
       var meta = el('div', 'note-meta');
       meta.appendChild(el('span', 'note-author', note.author));
       var time = el('span', 'note-time', ' ' + relativeTime(note.created_at));
       time.title = note.created_at ? new Date(note.created_at).toLocaleString() : '';
       meta.appendChild(time);
+      if (note.resolved) {
+        var when = note.resolved_at ? ' ' + relativeTime(note.resolved_at) : '';
+        var tag = el('span', 'note-tag resolved', 'resolved' + when);
+        tag.title = note.resolved_at ? new Date(note.resolved_at).toLocaleString() : '';
+        meta.appendChild(tag);
+      } else if (note.kept) {
+        var keptTag = el('span', 'note-tag kept', 'kept');
+        keptTag.title = 'Staying visible on purpose. Not a pending correction.';
+        meta.appendChild(keptTag);
+      }
       li.appendChild(meta);
       li.appendChild(el('div', 'note-body', note.body));
+      if (note.resolution) li.appendChild(el('div', 'note-resolution', note.resolution));
       box.list.appendChild(li);
     });
 
     if (resolved.length) {
       box.toggle.hidden = false;
-      box.toggle.textContent = (box.showResolved ? 'hide resolved (' : 'show resolved (') + resolved.length + ')';
+      box.toggle.textContent = (box.showResolved ? 'Hide resolved history (' : 'Resolved history (') + resolved.length + ')';
     } else {
       box.toggle.hidden = true;
     }
@@ -415,13 +426,13 @@
     renderBadges();
   }
 
-  /* Table of contents badges: unresolved notes per top-level section,
-     including notes on the cards inside it. */
+  /* Table of contents badges: open notes (not resolved, not kept) per
+     top-level section, including notes on the cards inside it. */
   function renderBadges() {
     var counts = {};
     Object.keys(notesById).forEach(function (id) {
       var n = notesById[id];
-      if (n.resolved) return;
+      if (n.resolved || n.kept) return;
       var top = n.section.split('--')[0];
       counts[top] = (counts[top] || 0) + 1;
     });

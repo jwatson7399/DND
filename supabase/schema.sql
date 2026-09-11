@@ -15,14 +15,27 @@ create table if not exists public.journal_notes (
   author      text not null,
   body        text not null,
   resolved    boolean not null default false,
+  resolved_at timestamptz,
+  kept        boolean not null default false,
+  resolution  text,
   session     integer,
   constraint journal_notes_author_allowed
     check (author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Durian', 'DM')),
   constraint journal_notes_body_length
     check (char_length(body) between 1 and 2000),
   constraint journal_notes_section_shape
-    check (section ~ '^[a-z0-9-]{1,64}$')
+    check (section ~ '^[a-z0-9-]{1,64}$'),
+  constraint journal_notes_resolution_length
+    check (resolution is null or char_length(resolution) between 1 and 300)
 );
+
+-- Note states, set by the maintainer only (anon cannot update):
+--   open:     resolved = false, kept = false. Shows in the box and counts
+--             toward the table of contents badge. Needs a decision.
+--   kept:     kept = true. Stays visible for good (lore, jokes, useful
+--             context) but no longer counts as a to-do.
+--   resolved: resolved = true. Hidden behind "Resolved history" in the box,
+--             struck through when expanded. resolution says what was done.
 
 comment on table public.journal_notes is
   'Party corrections and additions to the campaign journal. section matches the HTML section id.';
@@ -68,10 +81,36 @@ create trigger journal_notes_rate_limit
   for each row execute function public.journal_notes_rate_limit();
 
 -- ---------------------------------------------------------------------------
+-- Stamp resolved_at when a note flips to resolved, clear it if reopened.
+-- ---------------------------------------------------------------------------
+create or replace function public.journal_notes_track_resolved()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.resolved and not old.resolved then
+    new.resolved_at := now();
+  elsif not new.resolved then
+    new.resolved_at := null;
+  end if;
+  return new;
+end;
+$$;
+revoke execute on function public.journal_notes_track_resolved() from public, anon, authenticated;
+
+drop trigger if exists journal_notes_track_resolved on public.journal_notes;
+create trigger journal_notes_track_resolved
+  before update on public.journal_notes
+  for each row execute function public.journal_notes_track_resolved();
+
+-- ---------------------------------------------------------------------------
 -- Row level security. The page uses the anon key only.
 --   select: everyone can read every row.
 --   insert: allowed when author is on the list, body is 1 to 2000 chars,
---           and resolved is false.
+--           and the note starts open (resolved false, kept false, no
+--           resolution text).
 --   update and delete: nobody through the API. The maintainer resolves or
 --   removes notes from the Supabase dashboard (or a connector using the
 --   service role), which bypasses RLS.
@@ -94,6 +133,8 @@ create policy "journal_notes anon insert"
     author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Durian', 'DM')
     and char_length(body) between 1 and 2000
     and resolved = false
+    and kept = false
+    and resolution is null
   );
 
 -- Belt and braces: even if a policy is added by mistake later, anon and
