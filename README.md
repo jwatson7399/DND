@@ -13,6 +13,7 @@ A static campaign journal for the Thornhaven season, hosted on GitHub Pages, wit
 | `notes.css` | Styling for the notes boxes and the table of contents badges. Uses the journal's CSS variables. |
 | `supabase/schema.sql` | The exact table, constraints, trigger, and RLS policies. Recreates the backend from scratch. |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are, no Jekyll processing. |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The tab and home screen icon: a gold d20 on the journal's dark parchment. Linked from the head of `index.html`. |
 
 GitHub Pages is enabled from the `main` branch, root folder. Pushing to `main` redeploys within a minute or two.
 
@@ -66,6 +67,7 @@ When regenerating `index.html`, keep two things from the current file so the not
 
 - In `<head>`: `<link rel="stylesheet" href="notes.css">`
 - At the end of `<body>`, the three lines marked `Notes feature`: the Supabase JS CDN script and the `notes.js` script tag with its two data attributes.
+- Also in `<head>`, the three icon `<link>` tags and the `theme-color` meta, so the tab keeps the d20 icon instead of borrowing another site's favicon from the shared jwatson7399.github.io origin.
 
 Nothing else in the journal needs to know about notes. `notes.js` discovers sections by their ids at runtime (`overview`, `story-so-far`, `party`, `quests`, `npcs`, `locations`, `enemies`, `state`, `lessons`, `table`, plus every `details.session` whose id starts with `session-`) and every `.card` with a `.name` inside those sections, so new session blocks and new cards get an Add note control automatically. Keep the section ids stable or old notes will stop lining up with their sections.
 
