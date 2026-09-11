@@ -26,7 +26,7 @@ Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs
 Each notes area shows:
 
 - Existing notes, oldest first, with author, relative time, body, and a status tag. Open notes show a red "open" tag. Kept notes show a blue "kept" tag and stay visible. Notes deferred to the next rebuild show a gold "next rebuild" tag and stay visible until then. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
-- An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Durian, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
+- An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Therion, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
 
 Section ids: notes on a section use its HTML id (`quests`, `session-0`, `general`). Notes on a card use `<section>--<slug of the card name>`, for example `party--jotham` or `npcs--solara`. Notes on a kill recap use `enemies--kills-<character>-<kill number>`, for example `enemies--kills-jotham-1`; a character with no kills yet has one control at `enemies--kills-<character>`. Kill numbers follow the order of the list, so always append new kills at the bottom. If a card is renamed or removed when the journal is regenerated, its notes are not lost: they show up in the parent section's list instead.
@@ -98,7 +98,7 @@ Table `journal_notes`:
 | id | uuid | primary key, default `gen_random_uuid()` |
 | created_at | timestamptz | default `now()` |
 | section | text | not null. The section id in the HTML, or `<section>--<card slug>` for a card. Checked against `^[a-z0-9-]{1,64}$`. |
-| author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Durian, DM. |
+| author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Therion, DM. |
 | body | text | not null. Check constraint: length 1 to 2000. |
 | resolved | boolean | not null, default false. Set by the maintainer only. Hidden behind Resolved history on the page. |
 | resolved_at | timestamptz | nullable. Stamped by a trigger when resolved flips to true, cleared if reopened. |

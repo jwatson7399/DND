@@ -21,7 +21,7 @@ create table if not exists public.journal_notes (
   resolution  text,
   session     integer,
   constraint journal_notes_author_allowed
-    check (author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Durian', 'DM')),
+    check (author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Therion', 'DM')),
   constraint journal_notes_body_length
     check (char_length(body) between 1 and 2000),
   constraint journal_notes_section_shape
@@ -136,7 +136,7 @@ create policy "journal_notes anon insert"
   for insert
   to anon
   with check (
-    author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Durian', 'DM')
+    author in ('Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Therion', 'DM')
     and char_length(body) between 1 and 2000
     and resolved = false
     and kept = false

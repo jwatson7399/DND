@@ -18,7 +18,7 @@
   var SUPABASE_URL = script ? script.getAttribute('data-supabase-url') : '';
   var SUPABASE_KEY = script ? script.getAttribute('data-supabase-key') : '';
   var TABLE = 'journal_notes';
-  var AUTHORS = ['Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Durian', 'DM'];
+  var AUTHORS = ['Jotham', 'Soren', 'Aurelian', 'Erlathon', 'Therion', 'DM'];
   var STATIC_SECTIONS = ['overview', 'story-so-far', 'party', 'quests', 'npcs',
     'locations', 'enemies', 'state', 'lessons', 'table'];
   var AUTHOR_KEY = 'journal_notes_author';
