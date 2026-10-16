@@ -73,6 +73,7 @@
   nav.toc a:hover { color: var(--ink); background: var(--panel-2); text-decoration: none; }
   nav.toc a.active { color: var(--gold); border-left-color: var(--gold); background: var(--panel-2); }
   nav.toc ul ul a { padding-left: 22px; font-size: 12.5px; }
+  nav.toc ul ul ul a { padding-left: 36px; font-size: 12px; }
   nav.toc .group { color: var(--gold-dim); text-transform: uppercase; letter-spacing: 1.2px; font-size: 10.5px; margin: 16px 0 4px 8px; }
 
   main { flex: 1; min-width: 0; padding: 40px 56px 120px; max-width: 980px; }
@@ -192,7 +193,11 @@
     <li><a href="#lessons">Lessons and tactics</a></li>
     <li><a href="#sessions">Session minutes</a>
       <ul>
-        <li><a href="#session-0">Session 0</a></li>
+        <li><a href="#session-0">Session 0</a>
+          <ul>
+            <li><a href="#session-0-spells">Spells and potions</a></li>
+          </ul>
+        </li>
         <li><a href="#session-1">Session 1</a></li>
         <li><a href="#session-2">Session 2</a></li>
       </ul>
@@ -533,7 +538,7 @@
         <li><b>Session end.</b> 10:45 pm. DM: the party is "in a pickle," radiant damage is the answer, work as a team, Solara is available if needed. Next date TBD, after the wedding on September 25.</li>
       </ol>
 
-      <h4>Spells and potions used</h4>
+      <h4 id="session-0-spells">Spells and potions used</h4>
       <p class="uncertain">In the order they happened. Class features are included where they did spell-like work. "Slot" means a leveled spell slot was spent.</p>
       <ol>
         <li><b>The grand hall. Soren: Mage Hand</b> (cantrip). As the Dawn Striders' bard walked across the pool toward the head druid, Soren rolled Arcana and sent a Mage Hand to tie his shoelaces together. The light pouring in from the ceiling hid the spectral hand. The bard fell through the "solid" water in front of the whole council. Someone else at the table joked about readying a second Mage Hand for when he went down; the recording does not say who.</li>
@@ -638,7 +643,7 @@
     var y = window.scrollY + 120;
     var current = targets[0];
     for (var i = 0; i < targets.length; i++) {
-      if (targets[i].offsetTop <= y) current = targets[i];
+      if (targets[i].offsetParent && targets[i].offsetTop <= y) current = targets[i];
     }
     links.forEach(function (a) {
       a.classList.toggle('active', current && a.getAttribute('href') === '#' + current.id);
@@ -648,11 +653,12 @@
   window.addEventListener('scroll', setActive, { passive: true });
   window.addEventListener('load', setActive);
 
-  // Open a collapsed session when its TOC link or a hash points at it
+  // Open a collapsed session when its TOC link or a hash points at it or inside it
   function openTarget(hash) {
     if (!hash) return;
     var el = document.querySelector(hash);
-    if (el && el.tagName === 'DETAILS') el.open = true;
+    var details = el && el.closest('details');
+    if (details) details.open = true;
   }
   links.forEach(function (a) {
     a.addEventListener('click', function () {
