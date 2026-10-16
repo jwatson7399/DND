@@ -62,7 +62,7 @@ Outline:
    ```
 2. **Decide each note with Julian.** Fold it in now, fold it in at the next rebuild, keep it visible, resolve without changes, or skip. Deferred notes from earlier rounds are folded in as canon without asking again.
 3. **Update the journal content.** Fold corrections into the right sections, add the new session block (copy the Session 0 structure and add a matching link in the sidebar), and touch whatever the session changed:
-   - Session minutes: fill the next `details.session` block (Summary, Minutes, Spells and potions used, Roleplay moments, Rolls), add a new placeholder block below it, and add a matching sidebar link.
+   - Session minutes: fill the next `details.session` block (Summary, Minutes, Spells and potions used, Roleplay moments, Rolls; each heading has an id like `session-N-spells`, linked from the sidebar under its session), add a new placeholder block below it, and add a matching sidebar link.
    - Story so far: one new paragraph under an "After Session N" heading.
    - The party: append a "Session N:" line to each character's log and update level, HP, and abilities.
    - Quests: update status pills and log lines, add new quests as cards.
