@@ -8,6 +8,13 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#14110d">
+<script>
+  // Apply a saved light or dark choice before the page paints
+  try {
+    var savedTheme = localStorage.getItem('journal_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.setAttribute('data-theme', savedTheme);
+  } catch (e) {}
+</script>
 <style>
   :root {
     --bg: #14110d;
@@ -24,6 +31,38 @@
     --radius: 10px;
     --font-serif: "Georgia", "Times New Roman", serif;
     --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: dark;
+  }
+  /* Light mode: follows the system setting unless the toggle picked a theme */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5efe2;
+      --panel: #fbf7ee;
+      --panel-2: #ede3cf;
+      --ink: #2a2118;
+      --ink-dim: #65553f;
+      --gold: #7c5917;
+      --gold-dim: #745d30;
+      --red: #a3362c;
+      --green: #456b34;
+      --blue: #36658a;
+      --line: #dccfb6;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5efe2;
+    --panel: #fbf7ee;
+    --panel-2: #ede3cf;
+    --ink: #2a2118;
+    --ink-dim: #65553f;
+    --gold: #7c5917;
+    --gold-dim: #745d30;
+    --red: #a3362c;
+    --green: #456b34;
+    --blue: #36658a;
+    --line: #dccfb6;
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -160,6 +199,9 @@
   .topbtn { position: fixed; right: 22px; bottom: 22px; background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 999px; padding: 8px 14px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; opacity: 0; transition: opacity .2s; }
   .topbtn.show { opacity: 1; }
 
+  .theme-btn { position: fixed; top: 12px; right: 12px; z-index: 11; background: var(--panel); border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 6px; padding: 6px 10px; font-family: var(--font-sans); font-size: 12px; cursor: pointer; }
+  .theme-btn:hover { background: var(--panel-2); }
+
   .menu-btn { display: none; }
   @media (max-width: 860px) {
     .layout { display: block; }
@@ -170,7 +212,7 @@
     h1 { margin-top: 30px; font-size: 28px; }
   }
   @media print {
-    nav.toc, .topbtn, .menu-btn { display: none; }
+    nav.toc, .topbtn, .menu-btn, .theme-btn { display: none; }
     body { background: #fff; color: #111; }
     .card, details.session, .callout { border-color: #ccc; background: #fff; }
     h1, h2, nav a { color: #333; }
@@ -182,6 +224,7 @@
 </head>
 <body>
 <button class="menu-btn" onclick="document.querySelector('nav.toc').classList.toggle('open')">Contents</button>
+<button class="theme-btn" id="themebtn" type="button">Light mode</button>
 
 <div class="layout">
 <nav class="toc" id="toc">
@@ -673,6 +716,28 @@
     });
   });
   openTarget(location.hash);
+
+  // Light and dark mode. Follows the system until the button picks one.
+  var root = document.documentElement;
+  var themebtn = document.getElementById('themebtn');
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  var systemLight = window.matchMedia('(prefers-color-scheme: light)');
+  function currentTheme() {
+    return root.getAttribute('data-theme') || (systemLight.matches ? 'light' : 'dark');
+  }
+  function syncTheme() {
+    var theme = currentTheme();
+    themebtn.textContent = theme === 'light' ? 'Dark mode' : 'Light mode';
+    themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim());
+  }
+  themebtn.addEventListener('click', function () {
+    var next = currentTheme() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('journal_theme', next); } catch (e) {}
+    syncTheme();
+  });
+  if (systemLight.addEventListener) systemLight.addEventListener('change', syncTheme);
+  syncTheme();
 })();
 </script>
 <!-- Notes feature. Keep these three lines when replacing the journal above. -->
