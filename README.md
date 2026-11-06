@@ -14,6 +14,7 @@ A static campaign journal for the Thornhaven season, hosted on GitHub Pages, wit
 | `supabase/schema.sql` | The exact table, constraints, trigger, and RLS policies. Recreates the backend from scratch. |
 | `RESOLVE_NOTES.md` | The standard procedure for turning notes into journal updates, written for an agent or a human. |
 | `CLAUDE.md` | House rules for agents working in this repo, and the pointer to the resolve workflow. |
+| `transcripts/` | Raw session transcripts the journal is written from, one per session (`session-N.txt`, plus a timestamped `.md` when there is one). Public, like everything else in the repo. |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are, no Jekyll processing. |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | The tab and home screen icon: a gold d20 on the journal's dark parchment. Linked from the head of `index.html`. |
 
@@ -26,7 +27,7 @@ Every major section (Campaign at a glance, Story so far, The party, Quests, NPCs
 Each notes area shows:
 
 - Existing notes, oldest first, with author, relative time, body, and a status tag. Open notes show a red "open" tag. Kept notes show a blue "kept" tag and stay visible. Notes deferred to the next rebuild show a gold "next rebuild" tag and stay visible until then. Resolved notes are hidden behind a "Resolved history (n)" toggle and render dimmed and struck through when expanded, with a one-line resolution under each.
-- An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the six allowed authors (Jotham, Soren, Aurelian, Erlathon, Therion, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
+- An "Add note" button. Clicking it opens the compose form: a "Posting as" dropdown with the seven allowed authors (Jotham, Soren, Aurelian, Erlathon, Therion, Masato, DM), a textarea, an "Add note" submit button, and Cancel. The author choice is saved in the browser (localStorage), preselected next time, and shared by every form on the page. You must pick a name before posting.
 - The submit button is disabled while the request is in flight. Success appends the note, clears the box, and collapses the form. Failure shows a one-line message under the button.
 - **Editing your own note.** Until a note is resolved, the browser that posted it shows an "Edit" link next to it (kept and deferred notes included). Editing is inline: change the text, Save or Cancel. Edited notes show a small "edited" marker with the time on hover. There are no accounts, so "your own" means this browser: when you post, the page generates a random token, keeps it in localStorage, and sends it to the server, which stores only a hash. Clearing site data, or switching devices, loses the ability to edit older notes. Ask the DM to fix the text in that case.
 
@@ -101,7 +102,7 @@ Table `journal_notes`:
 | id | uuid | primary key, default `gen_random_uuid()` |
 | created_at | timestamptz | default `now()` |
 | section | text | not null. The section id in the HTML, or `<section>--<card slug>` for a card. Checked against `^[a-z0-9-]{1,64}$`. |
-| author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Therion, DM. |
+| author | text | not null. Check constraint: one of Jotham, Soren, Aurelian, Erlathon, Therion, Masato, DM. |
 | body | text | not null. Check constraint: length 1 to 2000. |
 | resolved | boolean | not null, default false. Set by the maintainer only. Hidden behind Resolved history on the page. |
 | resolved_at | timestamptz | nullable. Stamped by a trigger when resolved flips to true, cleared if reopened. |
